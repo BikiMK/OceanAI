@@ -1,0 +1,1007 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OceanAI Platform - AI-Driven Unified Data Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    popover: {
+                        DEFAULT: "var(--popover)",
+                        foreground: "var(--popover-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                },
+                fontFamily: {
+                    sans: ["Inter", "ui-sans-serif", "system-ui"],
+                },
+                animation: {
+                    "fade-in": "fade-in 0.5s ease-in-out",
+                    "slide-up": "slide-up 0.3s ease-out",
+                    "float": "float 6s ease-in-out infinite",
+                },
+                keyframes: {
+                    "fade-in": {
+                        "0%": { opacity: "0" },
+                        "100%": { opacity: "1" },
+                    },
+                    "slide-up": {
+                        "0%": { transform: "translateY(10px)", opacity: "0" },
+                        "100%": { transform: "translateY(0)", opacity: "1" },
+                    },
+                    "float": {
+                        "0%, 100%": { transform: "translateY(0px)" },
+                        "50%": { transform: "translateY(-10px)" },
+                    },
+                },
+            },
+        },
+    };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --radius: 12px;
+            
+            /* Ocean-themed color palette using HSL */
+            --background: hsl(221 39% 11%); /* Deep ocean blue */
+            --foreground: hsl(213 31% 91%); /* Light blue-white */
+            --card: hsl(217 33% 17%); /* Deep blue-gray */
+            --card-foreground: hsl(213 31% 91%);
+            --popover: hsl(217 33% 17%);
+            --popover-foreground: hsl(213 31% 91%);
+            --primary: hsl(199 89% 48%); /* Bright cyan */
+            --primary-foreground: hsl(221 39% 11%);
+            --secondary: hsl(217 33% 17%);
+            --secondary-foreground: hsl(213 31% 91%);
+            --muted: hsl(217 33% 17%);
+            --muted-foreground: hsl(215 20% 65%);
+            --accent: hsl(187 85% 53%); /* Aqua */
+            --accent-foreground: hsl(221 39% 11%);
+            --destructive: hsl(347 77% 50%); /* Coral red */
+            --destructive-foreground: hsl(213 31% 91%);
+            --border: hsl(217 33% 23%);
+            --input: hsl(217 33% 23%);
+            --ring: hsl(199 89% 48%);
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, hsl(221 39% 11%) 0%, hsl(217 33% 17%) 100%);
+            min-height: 100vh;
+        }
+        
+        .ocean-gradient {
+            background: linear-gradient(135deg, hsl(199 89% 48%) 0%, hsl(187 85% 53%) 100%);
+        }
+        
+        .glass-effect {
+            background: hsla(217, 33%, 17%, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid hsla(199, 89%, 48%, 0.2);
+        }
+        
+        .wave-pattern {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2306b6d4' fill-opacity='0.05'%3E%3Cpath d='M30 30c0-6.627-5.373-12-12-12s-12 5.373-12 12 5.373 12 12 12 12-5.373 12-12zm12 0c0-6.627-5.373-12-12-12s-12 5.373-12 12 5.373 12 12 12 12-5.373 12-12z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+    </style>
+</head>
+<body class="bg-background text-foreground antialiased">
+    <!-- Navigation -->
+    <nav class="glass-effect border-b border-border sticky top-0 z-50 wave-pattern">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo & Brand -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 ocean-gradient rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732L14.146 12.8l-1.179 4.456a1 1 0 01-1.934 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732L9.854 7.2l1.179-4.456A1 1 0 0112 2z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <span class="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">OceanAI Platform</span>
+                </div>
+                
+                <!-- Navigation Links -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <button id="nav-home" class="nav-link text-foreground hover:text-primary transition-colors duration-200 font-medium border-b-2 border-primary">Home</button>
+                    <button id="nav-ocean" class="nav-link text-muted-foreground hover:text-primary transition-colors duration-200 font-medium">Ocean Data</button>
+                    <button id="nav-fisheries" class="nav-link text-muted-foreground hover:text-primary transition-colors duration-200 font-medium">Fisheries Data</button>
+                    <button id="nav-molecular" class="nav-link text-muted-foreground hover:text-primary transition-colors duration-200 font-medium">Molecular Data</button>
+                    <button id="nav-predictions" class="nav-link text-muted-foreground hover:text-primary transition-colors duration-200 font-medium">AI Predictions</button>
+                    <button id="nav-about" class="nav-link text-muted-foreground hover:text-primary transition-colors duration-200 font-medium">About</button>
+                </div>
+                
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="md:hidden hidden border-t border-border py-4">
+                <div class="flex flex-col space-y-3">
+                    <button class="nav-link-mobile text-left py-2 text-foreground font-medium border-l-2 border-primary pl-3">Home</button>
+                    <button class="nav-link-mobile text-left py-2 text-muted-foreground hover:text-primary transition-colors pl-3">Ocean Data</button>
+                    <button class="nav-link-mobile text-left py-2 text-muted-foreground hover:text-primary transition-colors pl-3">Fisheries Data</button>
+                    <button class="nav-link-mobile text-left py-2 text-muted-foreground hover:text-primary transition-colors pl-3">Molecular Data</button>
+                    <button class="nav-link-mobile text-left py-2 text-muted-foreground hover:text-primary transition-colors pl-3">AI Predictions</button>
+                    <button class="nav-link-mobile text-left py-2 text-muted-foreground hover:text-primary transition-colors pl-3">About</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1">
+        <!-- Home Page -->
+        <div id="page-home" class="page-content">
+            <!-- Hero Section -->
+            <section class="wave-pattern py-20 px-4 sm:px-6 lg:px-8">
+                <div class="container mx-auto text-center max-w-4xl">
+                    <h1 class="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-fade-in">
+                        AI-Driven Unified Data Platform for Ocean, Fisheries & Molecular Research
+                    </h1>
+                    <p class="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-slide-up">
+                        Harness the power of artificial intelligence to unlock insights from comprehensive ocean, fisheries, and molecular biology datasets.
+                    </p>
+                    <button class="ocean-gradient text-primary-foreground px-8 py-4 rounded-lg font-semibold text-lg hover:scale-105 transition-transform duration-200 animate-slide-up">
+                        Get Started
+                    </button>
+                </div>
+            </section>
+
+            <!-- Stats Cards -->
+            <section class="py-16 px-4 sm:px-6 lg:px-8">
+                <div class="container mx-auto">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <!-- Ocean Temperature Card -->
+                        <div class="bg-card border border-border rounded-lg p-6 hover:border-primary/50 transition-all duration-300 group">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="p-3 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-muted-foreground">°C</span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-foreground mb-1" data-mock="true">18.4</h3>
+                            <p class="text-sm text-muted-foreground mb-2">Ocean Temperature</p>
+                            <div class="flex items-center text-green-400 text-sm">
+                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span data-mock="true">+2.1%</span>
+                            </div>
+                        </div>
+
+                        <!-- Fish Stock Card -->
+                        <div class="bg-card border border-border rounded-lg p-6 hover:border-accent/50 transition-all duration-300 group">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="p-3 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-colors">
+                                    <svg class="w-6 h-6 text-accent" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-muted-foreground">MT</span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-foreground mb-1" data-mock="true">847K</h3>
+                            <p class="text-sm text-muted-foreground mb-2">Fish Stock Level</p>
+                            <div class="flex items-center text-red-400 text-sm">
+                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span data-mock="true">-5.3%</span>
+                            </div>
+                        </div>
+
+                        <!-- DNA Species Count Card -->
+                        <div class="bg-card border border-border rounded-lg p-6 hover:border-green-400/50 transition-all duration-300 group">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="p-3 bg-green-400/10 rounded-lg group-hover:bg-green-400/20 transition-colors">
+                                    <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-muted-foreground">Species</span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-foreground mb-1" data-mock="true">12,847</h3>
+                            <p class="text-sm text-muted-foreground mb-2">DNA Species Count</p>
+                            <div class="flex items-center text-green-400 text-sm">
+                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span data-mock="true">+8.7%</span>
+                            </div>
+                        </div>
+
+                        <!-- Sustainability Index Card -->
+                        <div class="bg-card border border-border rounded-lg p-6 hover:border-yellow-400/50 transition-all duration-300 group">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="p-3 bg-yellow-400/10 rounded-lg group-hover:bg-yellow-400/20 transition-colors">
+                                    <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-muted-foreground">Index</span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-foreground mb-1" data-mock="true">73.2</h3>
+                            <p class="text-sm text-muted-foreground mb-2">Sustainability Index</p>
+                            <div class="flex items-center text-green-400 text-sm">
+                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span data-mock="true">+12.4%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Ocean Data Page -->
+        <div id="page-ocean" class="page-content hidden">
+            <section class="py-16 px-4 sm:px-6 lg:px-8">
+                <div class="container mx-auto">
+                    <div class="mb-12">
+                        <h1 class="text-4xl font-bold text-foreground mb-4">Ocean Data Dashboard</h1>
+                        <p class="text-lg text-muted-foreground">Comprehensive ocean monitoring and analysis platform</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Interactive World Map -->
+                        <div class="lg:col-span-2">
+                            <div class="bg-card border border-border rounded-lg p-6">
+                                <h2 class="text-xl font-semibold text-foreground mb-4">Global Ocean Monitoring</h2>
+                                <!-- Ocean data visualization with scientific styling -->
+                                <div class="aspect-video bg-gradient-to-b from-primary/20 to-accent/20 rounded-lg border-2 border-dashed border-border flex items-center justify-center relative overflow-hidden">
+                                    <div class="absolute inset-0 wave-pattern opacity-30"></div>
+                                    <div class="text-center z-10">
+                                        <svg class="w-16 h-16 text-primary mx-auto mb-4 animate-float" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        <p class="text-muted-foreground">Interactive Ocean Map</p>
+                                        <p class="text-sm text-muted-foreground mt-1">Real-time global ocean data visualization</p>
+                                    </div>
+                                    <!-- Placeholder markers for data points -->
+                                    <div class="absolute top-1/4 left-1/3 w-3 h-3 bg-primary rounded-full animate-pulse"></div>
+                                    <div class="absolute top-2/3 right-1/4 w-3 h-3 bg-accent rounded-full animate-pulse" style="animation-delay: 1s;"></div>
+                                    <div class="absolute bottom-1/3 left-1/2 w-3 h-3 bg-green-400 rounded-full animate-pulse" style="animation-delay: 2s;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Side Panel Charts -->
+                        <div class="space-y-6">
+                            <!-- Ocean Temperature Trend -->
+                            <div class="bg-card border border-border rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-foreground mb-4">Temperature Trend</h3>
+                                <canvas id="oceanTempChart" width="300" height="200"></canvas>
+                            </div>
+                            
+                            <!-- pH Levels -->
+                            <div class="bg-card border border-border rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-foreground mb-4">pH Levels</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-muted-foreground">Atlantic</span>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-20 h-2 bg-muted rounded-full overflow-hidden">
+                                                <div class="w-4/5 h-full bg-primary rounded-full"></div>
+                                            </div>
+                                            <span class="text-sm font-medium" data-mock="true">8.1</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-muted-foreground">Pacific</span>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-20 h-2 bg-muted rounded-full overflow-hidden">
+                                                <div class="w-3/5 h-full bg-accent rounded-full"></div>
+                                            </div>
+                                            <span class="text-sm font-medium" data-mock="true">7.9</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-muted-foreground">Indian</span>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-20 h-2 bg-muted rounded-full overflow-hidden">
+                                                <div class="w-2/3 h-full bg-green-400 rounded-full"></div>
+                                            </div>
+                                            <span class="text-sm font-medium" data-mock="true">8.0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Fisheries Data Page -->
+        <div id="page-fisheries" class="page-content hidden">
+            <section class="py-16 px-4 sm:px-6 lg:px-8">
+                <div class="container mx-auto">
+                    <div class="mb-12">
+                        <h1 class="text-4xl font-bold text-foreground mb-4">Fisheries Data</h1>
+                        <p class="text-lg text-muted-foreground">Fish stock monitoring and sustainability analysis</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Fish Stocks Chart -->
+                        <div class="bg-card border border-border rounded-lg p-6">
+                            <h2 class="text-xl font-semibold text-foreground mb-4">Fish Stocks by Region</h2>
+                            <canvas id="fishStocksChart" width="400" height="300"></canvas>
+                        </div>
+                        
+                        <!-- Species Diversity -->
+                        <div class="bg-card border border-border rounded-lg p-6">
+                            <h2 class="text-xl font-semibold text-foreground mb-4">Species Diversity</h2>
+                            <canvas id="speciesDiversityChart" width="400" height="300"></canvas>
+                        </div>
+                        
+                        <!-- Catch Statistics -->
+                        <div class="lg:col-span-2 bg-card border border-border rounded-lg p-6">
+                            <h2 class="text-xl font-semibold text-foreground mb-6">Recent Catch Statistics</h2>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead class="border-b border-border">
+                                        <tr>
+                                            <th class="text-left py-3 px-2 font-semibold text-foreground">Species</th>
+                                            <th class="text-left py-3 px-2 font-semibold text-foreground">Region</th>
+                                            <th class="text-left py-3 px-2 font-semibold text-foreground">Catch (MT)</th>
+                                            <th class="text-left py-3 px-2 font-semibold text-foreground">Trend</th>
+                                            <th class="text-left py-3 px-2 font-semibold text-foreground">Sustainability</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-muted-foreground">
+                                        <tr class="border-b border-border/50">
+                                            <td class="py-3 px-2" data-mock="true">Atlantic Cod</td>
+                                            <td class="py-3 px-2" data-mock="true">North Atlantic</td>
+                                            <td class="py-3 px-2" data-mock="true">45,230</td>
+                                            <td class="py-3 px-2">
+                                                <span class="inline-flex items-center text-red-400">
+                                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                                    </svg>
+                                                    <span data-mock="true">-12%</span>
+                                                </span>
+                                            </td>
+                                            <td class="py-3 px-2">
+                                                <span class="inline-flex px-2 py-1 text-xs font-medium bg-yellow-400/10 text-yellow-400 rounded-full">Moderate</span>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-b border-border/50">
+                                            <td class="py-3 px-2" data-mock="true">Pacific Salmon</td>
+                                            <td class="py-3 px-2" data-mock="true">North Pacific</td>
+                                            <td class="py-3 px-2" data-mock="true">78,450</td>
+                                            <td class="py-3 px-2">
+                                                <span class="inline-flex items-center text-green-400">
+                                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                                                    </svg>
+                                                    <span data-mock="true">+8%</span>
+                                                </span>
+                                            </td>
+                                            <td class="py-3 px-2">
+                                                <span class="inline-flex px-2 py-1 text-xs font-medium bg-green-400/10 text-green-400 rounded-full">Good</span>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-b border-border/50">
+                                            <td class="py-3 px-2" data-mock="true">Bluefin Tuna</td>
+                                            <td class="py-3 px-2" data-mock="true">Mediterranean</td>
+                                            <td class="py-3 px-2" data-mock="true">12,890</td>
+                                            <td class="py-3 px-2">
+                                                <span class="inline-flex items-center text-red-400">
+                                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                                    </svg>
+                                                    <span data-mock="true">-25%</span>
+                                                </span>
+                                            </td>
+                                            <td class="py-3 px-2">
+                                                <span class="inline-flex px-2 py-1 text-xs font-medium bg-red-400/10 text-red-400 rounded-full">Critical</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Molecular Data Page -->
+        <div id="page-molecular" class="page-content hidden">
+            <section class="py-16 px-4 sm:px-6 lg:px-8">
+                <div class="container mx-auto">
+                    <div class="mb-12">
+                        <h1 class="text-4xl font-bold text-foreground mb-4">Molecular Data</h1>
+                        <p class="text-lg text-muted-foreground">Genetic diversity and molecular analysis</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- DNA Sequence Visualization -->
+                        <div class="lg:col-span-2 bg-card border border-border rounded-lg p-6">
+                            <h2 class="text-xl font-semibold text-foreground mb-4">DNA Sequence Analysis</h2>
+                            <div class="aspect-video bg-gradient-to-r from-green-400/10 to-blue-400/10 rounded-lg border border-border p-4 font-mono text-sm">
+                                <div class="text-green-400 mb-2">>&gt; Species: Thunnus thynnus (Atlantic Bluefin Tuna)</div>
+                                <div class="text-muted-foreground mb-4">Sequence Length: 16,527 bp | GC Content: 46.8%</div>
+                                <div class="space-y-1 text-xs overflow-hidden" data-mock="true">
+                                    <div><span class="text-red-400">ATGC</span><span class="text-blue-400">GCAT</span><span class="text-green-400">TACG</span><span class="text-yellow-400">CGTA</span><span class="text-purple-400">AATG</span><span class="text-pink-400">GCTT</span> ...</div>
+                                    <div><span class="text-blue-400">CGAT</span><span class="text-green-400">TACG</span><span class="text-yellow-400">CGTA</span><span class="text-red-400">ATGC</span><span class="text-purple-400">GGCC</span><span class="text-pink-400">TAAT</span> ...</div>
+                                    <div><span class="text-green-400">TACG</span><span class="text-yellow-400">CGTA</span><span class="text-red-400">ATGC</span><span class="text-blue-400">CGAT</span><span class="text-pink-400">CCGG</span><span class="text-purple-400">ATAT</span> ...</div>
+                                </div>
+                                <div class="mt-4 text-accent">Analysis complete: 847 genes identified</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Genetic Diversity Metrics -->
+                        <div class="space-y-6">
+                            <div class="bg-card border border-border rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-foreground mb-4">Genetic Diversity</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <span class="text-muted-foreground">Heterozygosity</span>
+                                            <span class="font-medium" data-mock="true">0.74</span>
+                                        </div>
+                                        <div class="w-full h-2 bg-muted rounded-full overflow-hidden">
+                                            <div class="w-3/4 h-full bg-gradient-to-r from-primary to-accent rounded-full"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <span class="text-muted-foreground">Allelic Richness</span>
+                                            <span class="font-medium" data-mock="true">5.2</span>
+                                        </div>
+                                        <div class="w-full h-2 bg-muted rounded-full overflow-hidden">
+                                            <div class="w-5/6 h-full bg-gradient-to-r from-green-400 to-blue-400 rounded-full"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <span class="text-muted-foreground">FST Index</span>
+                                            <span class="font-medium" data-mock="true">0.12</span>
+                                        </div>
+                                        <div class="w-full h-2 bg-muted rounded-full overflow-hidden">
+                                            <div class="w-1/8 h-full bg-gradient-to-r from-yellow-400 to-red-400 rounded-full"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-card border border-border rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-foreground mb-4">Sample Status</h3>
+                                <div class="space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-muted-foreground">Processed</span>
+                                        <span class="text-green-400 font-medium" data-mock="true">1,247</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-muted-foreground">In Queue</span>
+                                        <span class="text-yellow-400 font-medium" data-mock="true">89</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-muted-foreground">Failed</span>
+                                        <span class="text-red-400 font-medium" data-mock="true">12</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Phylogenetic Tree -->
+                        <div class="lg:col-span-3 bg-card border border-border rounded-lg p-6">
+                            <h2 class="text-xl font-semibold text-foreground mb-4">Phylogenetic Relationships</h2>
+                            <div class="aspect-[2/1] bg-gradient-to-b from-muted/20 to-card rounded-lg border border-border flex items-center justify-center">
+                                <div class="text-center">
+                                    <svg class="w-16 h-16 text-accent mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                                    </svg>
+                                    <p class="text-muted-foreground">Interactive Phylogenetic Tree</p>
+                                    <p class="text-sm text-muted-foreground mt-1">Evolutionary relationships visualization</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- AI Predictions Page -->
+        <div id="page-predictions" class="page-content hidden">
+            <section class="py-16 px-4 sm:px-6 lg:px-8">
+                <div class="container mx-auto">
+                    <div class="mb-12">
+                        <h1 class="text-4xl font-bold text-foreground mb-4">AI Predictions</h1>
+                        <p class="text-lg text-muted-foreground">Advanced machine learning models for ocean ecosystem forecasting</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Input Form -->
+                        <div class="bg-card border border-border rounded-lg p-6">
+                            <h2 class="text-xl font-semibold text-foreground mb-6">Prediction Parameters</h2>
+                            <form class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-foreground mb-2">Species</label>
+                                    <select class="w-full bg-input border border-border rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        <option data-mock="true">Atlantic Cod (Gadus morhua)</option>
+                                        <option data-mock="true">Pacific Salmon (Oncorhynchus spp.)</option>
+                                        <option data-mock="true">Bluefin Tuna (Thunnus thynnus)</option>
+                                        <option data-mock="true">European Anchovy (Engraulis encrasicolus)</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-foreground mb-2">Region</label>
+                                    <select class="w-full bg-input border border-border rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        <option data-mock="true">North Atlantic</option>
+                                        <option data-mock="true">North Pacific</option>
+                                        <option data-mock="true">Mediterranean Sea</option>
+                                        <option data-mock="true">Arctic Ocean</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-foreground mb-2">Prediction Timeframe</label>
+                                    <select class="w-full bg-input border border-border rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        <option data-mock="true">6 months</option>
+                                        <option data-mock="true">1 year</option>
+                                        <option data-mock="true">5 years</option>
+                                        <option data-mock="true">10 years</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-foreground mb-2">Climate Scenario</label>
+                                    <select class="w-full bg-input border border-border rounded-lg px-3 py-2 text-foreground focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        <option data-mock="true">Current Conditions</option>
+                                        <option data-mock="true">RCP 2.6 (Low Emissions)</option>
+                                        <option data-mock="true">RCP 4.5 (Moderate Emissions)</option>
+                                        <option data-mock="true">RCP 8.5 (High Emissions)</option>
+                                    </select>
+                                </div>
+                                
+                                <button type="button" id="generatePrediction" class="w-full ocean-gradient text-primary-foreground py-3 px-4 rounded-lg font-semibold hover:scale-105 transition-transform duration-200">
+                                    Generate Prediction
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Prediction Results -->
+                        <div id="predictionResults" class="bg-card border border-border rounded-lg p-6">
+                            <h2 class="text-xl font-semibold text-foreground mb-6">Prediction Results</h2>
+                            
+                            <div class="space-y-6">
+                                <!-- Fish Population Prediction -->
+                                <div class="p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg border border-primary/20">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h3 class="text-lg font-semibold text-foreground flex items-center">
+                                            📈 <span class="ml-2">Predicted Fish Population</span>
+                                        </h3>
+                                        <span class="text-2xl font-bold text-primary" data-mock="true">+15.3%</span>
+                                    </div>
+                                    <p class="text-sm text-muted-foreground mb-3" data-mock="true">
+                                        Population expected to increase by 15.3% over the next 12 months based on current environmental conditions and fishing quotas.
+                                    </p>
+                                    <div class="w-full h-2 bg-muted rounded-full overflow-hidden">
+                                        <div class="w-2/3 h-full bg-gradient-to-r from-primary to-accent rounded-full animate-pulse"></div>
+                                    </div>
+                                    <div class="text-xs text-muted-foreground mt-1">Confidence: 87%</div>
+                                </div>
+                                
+                                <!-- Climate Change Effect -->
+                                <div class="p-4 bg-gradient-to-r from-red-400/10 to-red-400/5 rounded-lg border border-red-400/20">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h3 class="text-lg font-semibold text-foreground flex items-center">
+                                            🌡️ <span class="ml-2">Climate Change Effect</span>
+                                        </h3>
+                                        <span class="text-2xl font-bold text-red-400" data-mock="true">-7.8%</span>
+                                    </div>
+                                    <p class="text-sm text-muted-foreground mb-3" data-mock="true">
+                                        Rising sea temperatures and ocean acidification expected to reduce habitat suitability by 7.8% over 5 years.
+                                    </p>
+                                    <div class="w-full h-2 bg-muted rounded-full overflow-hidden">
+                                        <div class="w-1/3 h-full bg-gradient-to-r from-red-400 to-orange-400 rounded-full animate-pulse"></div>
+                                    </div>
+                                    <div class="text-xs text-muted-foreground mt-1">Confidence: 92%</div>
+                                </div>
+                                
+                                <!-- Genetic Diversity Risk -->
+                                <div class="p-4 bg-gradient-to-r from-yellow-400/10 to-yellow-400/5 rounded-lg border border-yellow-400/20">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h3 class="text-lg font-semibold text-foreground flex items-center">
+                                            🧬 <span class="ml-2">Genetic Diversity Risk</span>
+                                        </h3>
+                                        <span class="text-2xl font-bold text-yellow-400" data-mock="true">Medium</span>
+                                    </div>
+                                    <p class="text-sm text-muted-foreground mb-3" data-mock="true">
+                                        Moderate risk of genetic bottleneck due to population fragmentation. Immediate conservation measures recommended.
+                                    </p>
+                                    <div class="w-full h-2 bg-muted rounded-full overflow-hidden">
+                                        <div class="w-1/2 h-full bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full animate-pulse"></div>
+                                    </div>
+                                    <div class="text-xs text-muted-foreground mt-1">Confidence: 79%</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 p-4 bg-muted/20 rounded-lg">
+                                <p class="text-sm text-muted-foreground">
+                                    <strong>Model Information:</strong> Predictions generated using ensemble methods combining environmental data, historical catch records, and genetic analysis. Last updated: <span data-mock="true">2024-01-15</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- About Page -->
+        <div id="page-about" class="page-content hidden">
+            <section class="py-16 px-4 sm:px-6 lg:px-8">
+                <div class="container mx-auto max-w-4xl">
+                    <div class="mb-12 text-center">
+                        <h1 class="text-4xl font-bold text-foreground mb-4">About OceanAI Platform</h1>
+                        <p class="text-lg text-muted-foreground">Revolutionizing ocean research through artificial intelligence</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                        <div class="bg-card border border-border rounded-lg p-6">
+                            <h2 class="text-xl font-semibold text-foreground mb-4">Our Mission</h2>
+                            <p class="text-muted-foreground" data-mock="true">
+                                To accelerate ocean conservation and sustainable fisheries management through cutting-edge AI and comprehensive data integration, 
+                                providing researchers and policymakers with actionable insights for protecting marine ecosystems.
+                            </p>
+                        </div>
+                        
+                        <div class="bg-card border border-border rounded-lg p-6">
+                            <h2 class="text-xl font-semibold text-foreground mb-4">Technology</h2>
+                            <p class="text-muted-foreground" data-mock="true">
+                                Our platform leverages machine learning algorithms, satellite data, genomic analysis, and real-time sensor networks 
+                                to provide unprecedented insights into ocean health and fish population dynamics.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-card border border-border rounded-lg p-8 mb-8">
+                        <h2 class="text-2xl font-semibold text-foreground mb-6 text-center">Research Team</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="text-center">
+                                <div class="w-24 h-24 bg-gradient-to-br from-primary to-accent rounded-full mx-auto mb-4 flex items-center justify-center">
+                                    <span class="text-2xl font-bold text-primary-foreground" data-mock="true">DR</span>
+                                </div>
+                                <h3 class="font-semibold text-foreground" data-mock="true">Dr. Rachel Martinez</h3>
+                                <p class="text-sm text-muted-foreground" data-mock="true">Marine Biology Director</p>
+                            </div>
+                            
+                            <div class="text-center">
+                                <div class="w-24 h-24 bg-gradient-to-br from-accent to-green-400 rounded-full mx-auto mb-4 flex items-center justify-center">
+                                    <span class="text-2xl font-bold text-primary-foreground" data-mock="true">JC</span>
+                                </div>
+                                <h3 class="font-semibold text-foreground" data-mock="true">Dr. James Chen</h3>
+                                <p class="text-sm text-muted-foreground" data-mock="true">AI Research Lead</p>
+                            </div>
+                            
+                            <div class="text-center">
+                                <div class="w-24 h-24 bg-gradient-to-br from-green-400 to-blue-400 rounded-full mx-auto mb-4 flex items-center justify-center">
+                                    <span class="text-2xl font-bold text-primary-foreground" data-mock="true">SA</span>
+                                </div>
+                                <h3 class="font-semibold text-foreground" data-mock="true">Dr. Sarah Anderson</h3>
+                                <p class="text-sm text-muted-foreground" data-mock="true">Genomics Specialist</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-card border border-border rounded-lg p-6">
+                        <h2 class="text-xl font-semibold text-foreground mb-4">Data Sources</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
+                            <div>
+                                <ul class="space-y-2" data-mock="true">
+                                    <li>• NOAA Ocean Database</li>
+                                    <li>• FAO Global Fisheries Statistics</li>
+                                    <li>• Copernicus Marine Environment</li>
+                                    <li>• OBIS Biodiversity Records</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <ul class="space-y-2" data-mock="true">
+                                    <li>• GenBank Genetic Sequences</li>
+                                    <li>• Satellite Oceanography Data</li>
+                                    <li>• Regional Fisheries Organizations</li>
+                                    <li>• Marine Protected Area Networks</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-card border-t border-border mt-20">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-8 h-8 ocean-gradient rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732L14.146 12.8l-1.179 4.456a1 1 0 01-1.934 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732L9.854 7.2l1.179-4.456A1 1 0 0112 2z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <span class="text-xl font-bold text-foreground">OceanAI Platform</span>
+                    </div>
+                    <p class="text-muted-foreground text-sm" data-mock="true">
+                        Advanced AI-driven platform for ocean research and sustainable fisheries management.
+                    </p>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold text-foreground mb-4">Research Team</h3>
+                    <div class="space-y-2 text-sm text-muted-foreground" data-mock="true">
+                        <p>Dr. Rachel Martinez - Marine Biology</p>
+                        <p>Dr. James Chen - AI Research</p>
+                        <p>Dr. Sarah Anderson - Genomics</p>
+                        <p>Dr. Michael Thompson - Data Science</p>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold text-foreground mb-4">Data Sources</h3>
+                    <div class="space-y-2 text-sm text-muted-foreground" data-mock="true">
+                        <p>NOAA Ocean Database</p>
+                        <p>FAO Fisheries Statistics</p>
+                        <p>GenBank Sequences</p>
+                        <p>Copernicus Marine Data</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-border pt-8 mt-8 text-center text-sm text-muted-foreground">
+                <p data-mock="true">&copy; 2024 OceanAI Platform. Advancing marine science through artificial intelligence.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+    (function() {
+        'use strict';
+        
+        // Navigation functionality
+        const navLinks = document.querySelectorAll('.nav-link');
+        const navLinksMobile = document.querySelectorAll('.nav-link-mobile');
+        const pages = document.querySelectorAll('.page-content');
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        // Mobile menu toggle
+        mobileMenuBtn.addEventListener('click', function() {
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // Page navigation
+        function showPage(pageId) {
+            pages.forEach(page => {
+                page.classList.add('hidden');
+            });
+            document.getElementById(pageId).classList.remove('hidden');
+            
+            // Update nav link styles
+            navLinks.forEach(link => {
+                link.classList.remove('text-foreground', 'border-primary');
+                link.classList.add('text-muted-foreground');
+                link.style.borderBottomWidth = '0';
+            });
+            navLinksMobile.forEach(link => {
+                link.classList.remove('text-foreground', 'border-primary');
+                link.classList.add('text-muted-foreground');
+                link.style.borderLeftWidth = '0';
+            });
+            
+            // Highlight active nav link
+            const activeNavLink = document.getElementById('nav-' + pageId.replace('page-', ''));
+            if (activeNavLink) {
+                activeNavLink.classList.remove('text-muted-foreground');
+                activeNavLink.classList.add('text-foreground');
+                activeNavLink.style.borderBottomWidth = '2px';
+                activeNavLink.style.borderBottomColor = 'hsl(199 89% 48%)';
+            }
+            
+            // Close mobile menu
+            mobileMenu.classList.add('hidden');
+        }
+        
+        // Add click handlers for navigation
+        document.getElementById('nav-home').addEventListener('click', () => showPage('page-home'));
+        document.getElementById('nav-ocean').addEventListener('click', () => showPage('page-ocean'));
+        document.getElementById('nav-fisheries').addEventListener('click', () => showPage('page-fisheries'));
+        document.getElementById('nav-molecular').addEventListener('click', () => showPage('page-molecular'));
+        document.getElementById('nav-predictions').addEventListener('click', () => showPage('page-predictions'));
+        document.getElementById('nav-about').addEventListener('click', () => showPage('page-about'));
+        
+        // Chart initialization
+        function initCharts() {
+            // Ocean Temperature Chart
+            const oceanTempCtx = document.getElementById('oceanTempChart');
+            if (oceanTempCtx) {
+                new Chart(oceanTempCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        datasets: [{
+                            label: 'Temperature (°C)',
+                            data: [16.2, 16.8, 17.5, 18.1, 18.7, 18.4],
+                            borderColor: 'hsl(199 89% 48%)',
+                            backgroundColor: 'hsla(199, 89%, 48%, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                grid: { color: 'hsl(217 33% 23%)' },
+                                ticks: { color: 'hsl(215 20% 65%)' }
+                            },
+                            x: {
+                                grid: { color: 'hsl(217 33% 23%)' },
+                                ticks: { color: 'hsl(215 20% 65%)' }
+                            }
+                        },
+                        plugins: {
+                            legend: { labels: { color: 'hsl(213 31% 91%)' } }
+                        }
+                    }
+                });
+            }
+            
+            // Fish Stocks Chart
+            const fishStocksCtx = document.getElementById('fishStocksChart');
+            if (fishStocksCtx) {
+                new Chart(fishStocksCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Atlantic', 'Pacific', 'Indian', 'Arctic'],
+                        datasets: [{
+                            label: 'Fish Stocks (MT)',
+                            data: [450, 680, 320, 140],
+                            backgroundColor: [
+                                'hsl(199 89% 48%)',
+                                'hsl(187 85% 53%)',
+                                'hsl(166 76% 60%)',
+                                'hsl(142 71% 45%)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: 'hsl(217 33% 23%)' },
+                                ticks: { color: 'hsl(215 20% 65%)' }
+                            },
+                            x: {
+                                grid: { color: 'hsl(217 33% 23%)' },
+                                ticks: { color: 'hsl(215 20% 65%)' }
+                            }
+                        },
+                        plugins: {
+                            legend: { labels: { color: 'hsl(213 31% 91%)' } }
+                        }
+                    }
+                });
+            }
+            
+            // Species Diversity Chart
+            const speciesDiversityCtx = document.getElementById('speciesDiversityChart');
+            if (speciesDiversityCtx) {
+                new Chart(speciesDiversityCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Fish', 'Crustaceans', 'Mollusks', 'Other'],
+                        datasets: [{
+                            data: [45, 25, 20, 10],
+                            backgroundColor: [
+                                'hsl(199 89% 48%)',
+                                'hsl(187 85% 53%)',
+                                'hsl(166 76% 60%)',
+                                'hsl(142 71% 45%)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { 
+                                position: 'bottom',
+                                labels: { color: 'hsl(213 31% 91%)' }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // AI Prediction functionality
+        const generatePredictionBtn = document.getElementById('generatePrediction');
+        if (generatePredictionBtn) {
+            generatePredictionBtn.addEventListener('click', function() {
+                // TODO: Implement actual AI prediction logic
+                this.textContent = 'Generating...';
+                this.disabled = true;
+                
+                setTimeout(() => {
+                    this.textContent = 'Generate Prediction';
+                    this.disabled = false;
+                    
+                    // Show some animation for the results
+                    const results = document.querySelectorAll('#predictionResults .animate-pulse');
+                    results.forEach(result => {
+                        result.classList.add('animate-pulse');
+                    });
+                }, 2000);
+            });
+        }
+        
+        // Initialize charts when page loads
+        setTimeout(initCharts, 100);
+        
+        // Smooth scroll for CTA button
+        const ctaButton = document.querySelector('.ocean-gradient');
+        if (ctaButton) {
+            ctaButton.addEventListener('click', function() {
+                showPage('page-ocean');
+            });
+        }
+    })();
+    </script>
+</body>
+</html>

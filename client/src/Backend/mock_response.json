@@ -1,0 +1,13 @@
+{
+  "query": "tuna stock in pacific",
+  "species": "tuna",
+  "region": "pacific",
+  "prediction": "Predicted stock decline: -5.2% by 2030",
+  "fishPopulation": "-5.2%",
+  "climateChange": "-3.8%",
+  "geneticDiversity": "Medium",
+  "confidence": "88%",
+  "timeframe": "12 months",
+  "scenario": "Current Conditions",
+  "createdAt": "2025-09-11T23:46:00Z"
+}

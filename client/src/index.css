@@ -1,0 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Ocean-themed color palette using HSL */
+  --background: hsl(221, 39%, 11%); /* Deep ocean blue */
+  --foreground: hsl(213, 31%, 91%); /* Light blue-white */
+  --card: hsl(217, 33%, 17%); /* Deep blue-gray */
+  --card-foreground: hsl(213, 31%, 91%);
+  --popover: hsl(217, 33%, 17%);
+  --popover-foreground: hsl(213, 31%, 91%);
+  --primary: hsl(199, 89%, 48%); /* Bright cyan */
+  --primary-foreground: hsl(221, 39%, 11%);
+  --secondary: hsl(217, 33%, 17%);
+  --secondary-foreground: hsl(213, 31%, 91%);
+  --muted: hsl(217, 33%, 17%);
+  --muted-foreground: hsl(215, 20%, 65%);
+  --accent: hsl(187, 85%, 53%); /* Aqua */
+  --accent-foreground: hsl(221, 39%, 11%);
+  --destructive: hsl(347, 77%, 50%); /* Coral red */
+  --destructive-foreground: hsl(213, 31%, 91%);
+  --border: hsl(217, 33%, 23%);
+  --input: hsl(217, 33%, 23%);
+  --ring: hsl(199, 89%, 48%);
+  --chart-1: hsl(199, 89%, 48%);
+  --chart-2: hsl(187, 85%, 53%);
+  --chart-3: hsl(166, 76%, 60%);
+  --chart-4: hsl(142, 71%, 45%);
+  --chart-5: hsl(341, 48%, 75%);
+  --sidebar: hsl(217, 33%, 17%);
+  --sidebar-foreground: hsl(213, 31%, 91%);
+  --sidebar-primary: hsl(199, 89%, 48%);
+  --sidebar-primary-foreground: hsl(221, 39%, 11%);
+  --sidebar-accent: hsl(187, 85%, 53%);
+  --sidebar-accent-foreground: hsl(221, 39%, 11%);
+  --sidebar-border: hsl(217, 33%, 23%);
+  --sidebar-ring: hsl(199, 89%, 48%);
+  --font-sans: Inter, ui-sans-serif, system-ui;
+  --font-serif: Georgia, serif;
+  --font-mono: Menlo, monospace;
+  --radius: 12px;
+  --shadow-2xs: 0px 2px 0px 0px hsl(199, 89%, 48%, 0.00);
+  --shadow-xs: 0px 2px 0px 0px hsl(199, 89%, 48%, 0.00);
+  --shadow-sm: 0px 2px 0px 0px hsl(199, 89%, 48%, 0.00), 0px 1px 2px -1px hsl(199, 89%, 48%, 0.00);
+  --shadow: 0px 2px 0px 0px hsl(199, 89%, 48%, 0.00), 0px 1px 2px -1px hsl(199, 89%, 48%, 0.00);
+  --shadow-md: 0px 2px 0px 0px hsl(199, 89%, 48%, 0.00), 0px 2px 4px -1px hsl(199, 89%, 48%, 0.00);
+  --shadow-lg: 0px 2px 0px 0px hsl(199, 89%, 48%, 0.00), 0px 4px 6px -1px hsl(199, 89%, 48%, 0.00);
+  --shadow-xl: 0px 2px 0px 0px hsl(199, 89%, 48%, 0.00), 0px 8px 10px -1px hsl(199, 89%, 48%, 0.00);
+  --shadow-2xl: 0px 2px 0px 0px hsl(199, 89%, 48%, 0.00);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+}
+
+.dark {
+  --background: hsl(221, 39%, 11%);
+  --foreground: hsl(213, 31%, 91%);
+  --card: hsl(217, 33%, 17%);
+  --card-foreground: hsl(213, 31%, 91%);
+  --popover: hsl(217, 33%, 17%);
+  --popover-foreground: hsl(213, 31%, 91%);
+  --primary: hsl(199, 89%, 48%);
+  --primary-foreground: hsl(221, 39%, 11%);
+  --secondary: hsl(217, 33%, 17%);
+  --secondary-foreground: hsl(213, 31%, 91%);
+  --muted: hsl(217, 33%, 17%);
+  --muted-foreground: hsl(215, 20%, 65%);
+  --accent: hsl(187, 85%, 53%);
+  --accent-foreground: hsl(221, 39%, 11%);
+  --destructive: hsl(347, 77%, 50%);
+  --destructive-foreground: hsl(213, 31%, 91%);
+  --border: hsl(217, 33%, 23%);
+  --input: hsl(217, 33%, 23%);
+  --ring: hsl(199, 89%, 48%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    background: linear-gradient(135deg, hsl(221, 39%, 11%) 0%, hsl(217, 33%, 17%) 100%);
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .ocean-gradient {
+    background: linear-gradient(135deg, hsl(199, 89%, 48%) 0%, hsl(187, 85%, 53%) 100%);
+  }
+  
+  .glass-effect {
+    background: hsla(217, 33%, 17%, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid hsla(199, 89%, 48%, 0.2);
+  }
+  
+  .wave-pattern {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2306b6d4' fill-opacity='0.05'%3E%3Cpath d='M30 30c0-6.627-5.373-12-12-12s-12 5.373-12 12 5.373 12 12 12 12-5.373 12-12zm12 0c0-6.627-5.373-12-12-12s-12 5.373-12 12 5.373 12 12 12 12-5.373 12-12z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slide-up 0.3s ease-out;
+  }
+  
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  @keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  
+  @keyframes slide-up {
+    0% { transform: translateY(10px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+}
