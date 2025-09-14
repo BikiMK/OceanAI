@@ -39,26 +39,24 @@ const Navigation = () => {
             <div className="flex items-center space-x-3 cursor-pointer">
               <div className="w-8 h-8 ocean-gradient rounded-lg flex items-center justify-center">
                 <svg className="w-5 h-5 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732L14.146 12.8l-1.179 4.456a1 1 0 01-1.934 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732L9.854 7.2l1.179-4.456A1 1 0 0112 2z" clipRule="evenodd"></path>
+                  <path
+                    fillRule="evenodd"
+                    d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732L14.146 12.8l-1.179 4.456a1 1 0 01-1.934 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732L9.854 7.2l1.179-4.456A1 1 0 0112 2z"
+                    clipRule="evenodd"
+                  ></path>
                 </svg>
               </div>
-<<<<<<< HEAD
-              <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                OceanAI Platform
-              </span>
-=======
               <div className="flex flex-col min-w-0">
-                <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-teal-300 bg-clip-text text-transparent group-hover:from-white group-hover:via-cyan-300 group-hover:to-blue-300 transition-all duration-300 truncate">
-                  OceanAI
+                <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                  OceanAI Platform
                 </span>
-                <span className="text-xs text-cyan-300/70 font-mono tracking-wider opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-y-1 group-hover:translate-y-0 whitespace-nowrap hidden sm:block">
+                <span className="text-xs text-cyan-300/70 font-mono tracking-wider hidden sm:block">
                   NEURAL OCEAN ENGINE
                 </span>
               </div>
->>>>>>> e65db4f (API Integrated)
             </div>
           </Link>
-          
+
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {navItems.map((item) => (
@@ -78,7 +76,7 @@ const Navigation = () => {
                 </span>
               </Link>
             ))}
-            
+
             {/* Authentication */}
             {user ? (
               <DropdownMenu>
@@ -92,7 +90,11 @@ const Navigation = () => {
                     {user.user_metadata?.full_name || user.email}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={signOut} className="text-destructive" data-testid="logout-button">
+                  <DropdownMenuItem
+                    onClick={signOut}
+                    className="text-destructive"
+                    data-testid="logout-button"
+                  >
                     <LogOut className="w-4 h-4 mr-2" />
                     Logout
                   </DropdownMenuItem>
@@ -100,13 +102,16 @@ const Navigation = () => {
               </DropdownMenu>
             ) : (
               <Link href="/auth">
-                <Button className="ocean-gradient text-primary-foreground hover:scale-105 transition-transform duration-200" data-testid="login-button">
+                <Button
+                  className="ocean-gradient text-primary-foreground hover:scale-105 transition-transform duration-200"
+                  data-testid="login-button"
+                >
                   Sign In
                 </Button>
               </Link>
             )}
           </div>
-          
+
           {/* Mobile Menu Button */}
           <div className="md:hidden">
             <Button
@@ -123,7 +128,7 @@ const Navigation = () => {
             </Button>
           </div>
         </div>
-        
+
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-border py-4">
@@ -146,14 +151,12 @@ const Navigation = () => {
                   </span>
                 </Link>
               ))}
-              
+
               {/* Mobile Authentication */}
               <div className="pt-4 border-t border-border">
                 {user ? (
                   <div className="space-y-3">
-                    <div className="text-sm text-muted-foreground px-3">
-                      {user.email}
-                    </div>
+                    <div className="text-sm text-muted-foreground px-3">{user.email}</div>
                     <Button
                       variant="ghost"
                       onClick={signOut}
@@ -166,7 +169,10 @@ const Navigation = () => {
                   </div>
                 ) : (
                   <Link href="/auth" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button className="w-full ocean-gradient text-primary-foreground" data-testid="mobile-login-button">
+                    <Button
+                      className="w-full ocean-gradient text-primary-foreground"
+                      data-testid="mobile-login-button"
+                    >
                       Sign In
                     </Button>
                   </Link>
