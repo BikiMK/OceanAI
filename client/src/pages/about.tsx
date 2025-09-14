@@ -4,38 +4,38 @@ const About = () => {
   const teamMembers = [
     {
       name: "Biki Mukherjee",
-      role: "Frontend Developer & Project Lead",
+      role: "Full-stack Developer & Project Lead",
       initials: "BM",
       gradient: "from-primary to-accent",
-      image: "src/images/biki.png", // Add your image path here
+      image: "src/images/biki.jpg", // Add your image path here
     },
     {
       name: "Rupsa Pramanik",
       role: "Backend & API Integration",
       initials: "RP",
       gradient: "from-accent to-green-400",
-      image: "/images/rupsa-pramanik.jpg", // Add your image path here
+      image: "src/images/rupsa.jpg", // Add your image path here
     },
     {
       name: "Sayan Samadder",
       role: "Frontend Developer",
       initials: "SS",
       gradient: "from-accent to-green-400",
-      image: "/images/sayan-samadder.jpg", // Add your image path here
+      image: "src/images/sayan.jpg", // Add your image path here
     },
     {
       name: "Dipannita Biswas",
       role: "Documenctation Presentator",
       initials: "DB",
       gradient: "from-accent to-green-400",
-      image: "/images/dipannita-biswas.jpg", // Add your image path here
+      image: "src/images/dipannita.jpg", // Add your image path here
     },
     {
       name: "Debjit Chakraborty",
       role: "AI/ML & Model Integration",
       initials: "DC",
       gradient: "from-green-400 to-blue-400",
-      image: "/images/debjit-chakraborty.jpg", // Add your image path here
+      image: "src/images/debjit.jpg", // Add your image path here
     },
   ];
 
