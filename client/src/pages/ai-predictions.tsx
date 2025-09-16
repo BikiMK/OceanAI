@@ -1,10 +1,10 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Sparkles, TrendingUp, Thermometer, Dna, Brain, Activity, Globe, Zap, Cpu, Database, Network } from "lucide-react";
+import Plot from 'react-plotly.js';
 
 // Mock auth context for demonstration
 const useAuth = () => ({
@@ -130,34 +130,95 @@ const FuturisticBackground = () => {
   );
 };
 
-// Mock chart components with futuristic styling
-const OceanTempChart = () => (
-  <div className="h-[120px] flex items-center justify-center">
-    <div className="text-center">
-      <div className="relative">
-        <Thermometer className="w-8 h-8 mx-auto mb-2 text-cyan-400 animate-pulse" />
-        <div className="absolute inset-0 bg-cyan-400/20 rounded-full blur-lg animate-pulse" />
-      </div>
-      <div className="text-sm text-cyan-300 font-mono">TEMP: +2.3°C</div>
-      <div className="text-xs text-slate-400">ANOMALY DETECTED</div>
-    </div>
-  </div>
-);
+// Prediction Chart Component using Plotly.js
+const PredictionChart = ({ searchResults }: { searchResults: any[] }) => {
+  if (!searchResults.length) return null;
 
-const SpeciesDiversityChart = () => (
-  <div className="h-[120px] flex items-center justify-center">
-    <div className="text-center">
-      <div className="relative">
-        <Dna className="w-8 h-8 mx-auto mb-2 text-green-400 animate-pulse" />
-        <div className="absolute inset-0 bg-green-400/20 rounded-full blur-lg animate-pulse" />
-      </div>
-      <div className="text-sm text-green-300 font-mono">DIV: 0.74</div>
-      <div className="text-xs text-slate-400">GENETIC STABILITY</div>
-    </div>
-  </div>
-);
+  // Parse fishPopulation to numbers for plotting
+  const regions = searchResults.map((result) => result.region);
+  const populations = searchResults.map((result) => {
+    const val = result.fishPopulation.replace('%', '').replace('+', '').replace('-', '-');
+    return parseFloat(val) || 0;
+  });
+  const colors = populations.map((p) => (p > 0 ? '#10b981' : '#ef4444')); // Green for positive, red for negative
 
-// Leaflet Map Component with futuristic styling
+  const data = [
+    {
+      x: regions,
+      y: populations,
+      type: 'bar',
+      marker: {
+        color: colors,
+        line: {
+          color: 'white',
+          width: 1
+        }
+      },
+      hovertemplate: '<b>%{x}</b><br>Population Change: %{y}%<extra></extra>'
+    }
+  ];
+
+  const layout = {
+    title: {
+      text: 'Fish Population Predictions by Region',
+      font: {
+        size: 18,
+        color: '#ffffff'
+      }
+    },
+    xaxis: {
+      title: {
+        text: 'Regions',
+        color: '#e2e8f0'
+      },
+      tickfont: {
+        color: '#e2e8f0'
+      },
+      gridcolor: 'rgba(255,255,255,0.1)'
+    },
+    yaxis: {
+      title: {
+        text: 'Population Change (%)',
+        color: '#e2e8f0'
+      },
+      tickfont: {
+        color: '#e2e8f0'
+      },
+      gridcolor: 'rgba(255,255,255,0.1)'
+    },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(17,24,39,0.8)',
+    font: {
+      color: '#e2e8f0'
+    },
+    margin: {
+      l: 50,
+      r: 20,
+      b: 50,
+      t: 50
+    },
+    showlegend: false
+  };
+
+  return (
+    <Plot
+      data={data}
+      layout={layout}
+      config={{
+        responsive: true,
+        displayModeBar: true,
+        modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+      }}
+      style={{
+        width: '100%',
+        height: '400px'
+      }}
+      className="rounded-lg border border-white/20"
+    />
+  );
+};
+
+// Leaflet Map Component with white mode styling
 const LeafletMap = ({ regionData }: { regionData?: any }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -172,29 +233,33 @@ const LeafletMap = ({ regionData }: { regionData?: any }) => {
     link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css';
     document.head.appendChild(link);
 
-    // Add custom CSS for futuristic styling
+    // Add custom CSS for white mode styling
     const customStyles = document.createElement('style');
     customStyles.textContent = `
       .leaflet-container {
         z-index: 1 !important;
         position: relative !important;
-        background: #0a0a0a !important;
-        border: 1px solid #00ffff33 !important;
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
         border-radius: 12px !important;
-        box-shadow: 0 0 30px rgba(0, 255, 255, 0.1) !important;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.1) !important;
       }
       .leaflet-tile {
-        filter: brightness(0.3) contrast(1.2) hue-rotate(180deg) !important;
+        filter: brightness(1) contrast(1) !important;
       }
       .leaflet-control-zoom a {
-        background: rgba(0, 0, 0, 0.8) !important;
-        border: 1px solid #00ffff33 !important;
-        color: #00ffff !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #475569 !important;
+      }
+      .leaflet-control-zoom a:hover {
+        background: rgba(255, 255, 255, 1) !important;
+        color: #1e293b !important;
       }
       .leaflet-control-attribution {
-        background: rgba(0, 0, 0, 0.8) !important;
-        color: #666 !important;
-        font-family: 'JetBrains Mono', monospace !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        color: #64748b !important;
+        font-family: 'Inter', sans-serif !important;
       }
       @keyframes pulse {
         0% { transform: scale(1); opacity: 1; box-shadow: 0 0 10px currentColor; }
@@ -202,15 +267,15 @@ const LeafletMap = ({ regionData }: { regionData?: any }) => {
         100% { transform: scale(1); opacity: 1; box-shadow: 0 0 10px currentColor; }
       }
       .custom-popup .leaflet-popup-content-wrapper {
-        background: rgba(0, 0, 0, 0.9) !important;
-        border: 1px solid #00ffff33 !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        border: 1px solid #cbd5e1 !important;
         border-radius: 8px !important;
-        color: #00ffff !important;
-        box-shadow: 0 0 20px rgba(0, 255, 255, 0.2) !important;
+        color: #1e293b !important;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15) !important;
       }
       .custom-popup .leaflet-popup-tip {
-        background: rgba(0, 0, 0, 0.9) !important;
-        border: 1px solid #00ffff33 !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        border: 1px solid #cbd5e1 !important;
       }
     `;
     document.head.appendChild(customStyles);
@@ -306,32 +371,32 @@ const LeafletMap = ({ regionData }: { regionData?: any }) => {
         }).addTo(map);
 
         const popupContent = `
-          <div style="font-family: 'JetBrains Mono', monospace; min-width: 200px; background: rgba(0, 0, 0, 0.9); color: #00ffff;">
-            <div style="border-bottom: 1px solid #00ffff33; padding-bottom: 8px; margin-bottom: 8px;">
-              <div style="font-size: 10px; color: #666;">STATION_ID:</div>
-              <div style="font-size: 12px; font-weight: bold; color: #00ffff;">${station.name}</div>
+          <div style="font-family: 'Inter', sans-serif; min-width: 200px; background: rgba(255, 255, 255, 0.95); color: #1e293b;">
+            <div style="border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 8px;">
+              <div style="font-size: 10px; color: #64748b;">STATION_ID:</div>
+              <div style="font-size: 12px; font-weight: bold; color: #1e293b;">${station.name}</div>
             </div>
             <div style="margin-bottom: 6px;">
-              <span style="font-size: 10px; color: #666;">TARGET_SPECIES:</span>
-              <div style="font-size: 11px; color: #fff;">${station.species}</div>
+              <span style="font-size: 10px; color: #64748b;">TARGET_SPECIES:</span>
+              <div style="font-size: 11px; color: #334155;">${station.species}</div>
             </div>
             <div style="margin-bottom: 8px;">
-              <span style="font-size: 10px; color: #666;">PREDICTION_DELTA:</span>
+              <span style="font-size: 10px; color: #64748b;">PREDICTION_DELTA:</span>
               <span style="
                 font-size: 12px; 
                 font-weight: bold; 
-                color: ${station.prediction.startsWith('+') ? '#00ff88' : '#ff4444'};
+                color: ${station.prediction.startsWith('+') ? '#059669' : '#dc2626'};
               ">
                 ${station.prediction}
               </span>
             </div>
             <div style="
-              background: linear-gradient(90deg, #00ffff11, #ff00ff11); 
-              border: 1px solid #00ffff22; 
+              background: linear-gradient(90deg, #f1f5f9, #e2e8f0); 
+              border: 1px solid #cbd5e1; 
               border-radius: 4px; 
               padding: 4px 6px; 
               font-size: 9px; 
-              color: #888;
+              color: #64748b;
               text-align: center;
             ">
               AI_CONFIDENCE: 87-91% | STATUS: ACTIVE
@@ -359,7 +424,7 @@ const LeafletMap = ({ regionData }: { regionData?: any }) => {
         currentPaths.forEach((path, index) => {
           setTimeout(() => {
             const polyline = L.polyline(path, {
-              color: '#00ffff',
+              color: '#3b82f6',
               weight: 2,
               opacity: 0.6,
               dashArray: '5, 10'
@@ -388,14 +453,20 @@ const LeafletMap = ({ regionData }: { regionData?: any }) => {
   }, []);
 
   useEffect(() => {
-    if (!mapInstanceRef.current || !regionData) return;
+    if (!mapInstanceRef.current || !regionData || !regionData.region) return;
 
     const map = mapInstanceRef.current;
-    
+    const L = (window as any).L;
+
+    if (!L) return; // Ensure Leaflet is loaded
+
+    // Remove existing prediction marker if it exists
     if (predictionMarkerRef.current) {
       map.removeLayer(predictionMarkerRef.current);
+      predictionMarkerRef.current = null;
     }
 
+    // Define region coordinates with fallback
     const regionCoordinates: { [key: string]: [number, number] } = {
       'pacific': [20, -150],
       'atlantic': [40, -30],
@@ -409,21 +480,29 @@ const LeafletMap = ({ regionData }: { regionData?: any }) => {
       'ocean': [0, 0]
     };
 
+    // Get region and coordinates, fallback to 'ocean' if invalid
     const region = regionData.region?.toLowerCase() || 'ocean';
     const coordinates = regionCoordinates[region] || regionCoordinates['ocean'];
 
-    const predictionIcon = (window as any).L?.divIcon({
+    // Update map view to new coordinates with animation
+    map.flyTo(coordinates, 5, {
+      animate: true,
+      duration: 1.5 // Smooth transition for 1.5 seconds
+    });
+
+    // Create custom prediction marker icon
+    const predictionIcon = L.divIcon({
       html: `
         <div style="
-          background: radial-gradient(circle, #ff00ff 0%, #0066ff 100%);
-          border: 3px solid #00ffff;
+          background: radial-gradient(circle, #8b5cf6 0%, #3b82f6 100%);
+          border: 3px solid #1e293b;
           border-radius: 50%;
           width: 24px;
           height: 24px;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 0 20px #ff00ff, 0 0 40px #0066ff;
+          box-shadow: 0 0 20px rgba(139, 92, 246, 0.5), 0 0 40px rgba(59, 130, 246, 0.3);
           animation: pulse 2s infinite;
         ">
           <div style="
@@ -431,7 +510,7 @@ const LeafletMap = ({ regionData }: { regionData?: any }) => {
             border-radius: 50%;
             width: 8px;
             height: 8px;
-            box-shadow: 0 0 10px #fff;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
           "></div>
         </div>
       `,
@@ -440,70 +519,69 @@ const LeafletMap = ({ regionData }: { regionData?: any }) => {
       iconAnchor: [12, 12]
     });
 
-    if ((window as any).L) {
-      const marker = (window as any).L.marker(coordinates, {
-        icon: predictionIcon
-      }).addTo(map);
+    // Add new prediction marker
+    const marker = L.marker(coordinates, {
+      icon: predictionIcon
+    }).addTo(map);
 
-      const popupContent = `
-        <div style="font-family: 'JetBrains Mono', monospace; min-width: 220px; background: rgba(0, 0, 0, 0.95); color: #00ffff;">
-          <div style="border-bottom: 1px solid #ff00ff; padding-bottom: 8px; margin-bottom: 8px;">
-            <div style="font-size: 10px; color: #666;">AI_PREDICTION_ENGINE:</div>
-            <div style="font-size: 12px; font-weight: bold; color: #ff00ff;">NEURAL_FORECAST_ALPHA</div>
-          </div>
-          <div style="margin-bottom: 6px;">
-            <span style="font-size: 10px; color: #666;">SPECIES_TARGET:</span>
-            <div style="font-size: 11px; color: #fff;">${regionData.species}</div>
-          </div>
-          <div style="margin-bottom: 6px;">
-            <span style="font-size: 10px; color: #666;">REGION_SCOPE:</span>
-            <div style="font-size: 11px; color: #fff;">${regionData.region}</div>
-          </div>
-          <div style="margin-bottom: 8px;">
-            <span style="font-size: 10px; color: #666;">STOCK_STATUS:</span>
-            <span style="
-              font-size: 12px; 
-              font-weight: bold; 
-              color: ${regionData.stock_status === 'Increasing' ? '#00ff88' : regionData.stock_status === 'Declining' ? '#ff4444' : '#ffaa00'};
-            ">
-              ${regionData.stock_status} (${regionData.fishPopulation})
-            </span>
-          </div>
-          <div style="
-            background: linear-gradient(90deg, #ff00ff11, #0066ff11); 
-            border: 1px solid #00ffff22; 
-            border-radius: 4px; 
-            padding: 4px 6px; 
-            font-size: 9px; 
-            color: #888;
-            text-align: center;
-          ">
-            CONFIDENCE: ${regionData.confidence} | MODEL: ${regionData.model_used ? 'NEURAL_ACTIVE' : 'FALLBACK'}
-          </div>
+    // Create popup content
+    const popupContent = `
+      <div style="font-family: 'Inter', sans-serif; min-width: 220px; background: rgba(255, 255, 255, 0.98); color: #1e293b;">
+        <div style="border-bottom: 1px solid #8b5cf6; padding-bottom: 8px; margin-bottom: 8px;">
+          <div style="font-size: 10px; color: #64748b;">AI_PREDICTION_ENGINE:</div>
+          <div style="font-size: 12px; font-weight: bold; color: #8b5cf6;">NEURAL_FORECAST_ALPHA</div>
         </div>
-      `;
+        <div style="margin-bottom: 6px;">
+          <span style="font-size: 10px; color: #64748b;">SPECIES_TARGET:</span>
+          <div style="font-size: 11px; color: #334155;">${regionData.species || 'Unknown'}</div>
+        </div>
+        <div style="margin-bottom: 6px;">
+          <span style="font-size: 10px; color: #64748b;">REGION_SCOPE:</span>
+          <div style="font-size: 11px; color: #334155;">${regionData.region || 'Unknown'}</div>
+        </div>
+        <div style="margin-bottom: 8px;">
+          <span style="font-size: 10px; color: #64748b;">STOCK_STATUS:</span>
+          <span style="
+            font-size: 12px; 
+            font-weight: bold; 
+            color: ${regionData.stock_status === 'Increasing' ? '#059669' : regionData.stock_status === 'Declining' ? '#dc2626' : '#d97706'};
+          ">
+            ${regionData.stock_status || 'Unknown'} (${regionData.fishPopulation || 'N/A'})
+          </span>
+        </div>
+        <div style="
+          background: linear-gradient(90deg, #f8fafc, #e2e8f0); 
+          border: 1px solid #cbd5e1; 
+          border-radius: 4px; 
+          padding: 4px 6px; 
+          font-size: 9px; 
+          color: #64748b;
+          text-align: center;
+        ">
+          CONFIDENCE: ${regionData.confidence || 'N/A'} | MODEL: ${regionData.model_used ? 'NEURAL_ACTIVE' : 'FALLBACK'}
+        </div>
+      </div>
+    `;
 
-      marker.bindPopup(popupContent, {
-        maxWidth: 280,
-        className: 'prediction-popup'
-      });
+    // Bind and open popup
+    marker.bindPopup(popupContent, {
+      maxWidth: 280,
+      className: 'prediction-popup'
+    }).openPopup();
 
-      marker.openPopup();
-      map.setView(coordinates, 5);
-
-      predictionMarkerRef.current = marker;
-    }
+    // Store marker reference
+    predictionMarkerRef.current = marker;
   }, [regionData]);
 
   return (
     <div 
       ref={mapRef} 
-      className="w-full h-full rounded-lg relative overflow-hidden border border-cyan-500/30" 
+      className="w-full h-full rounded-lg relative overflow-hidden border border-gray-200" 
       style={{ 
         minHeight: '400px',
         zIndex: 1,
         position: 'relative',
-        background: 'radial-gradient(circle at center, rgba(0, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.8) 100%)'
+        background: 'linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(248, 250, 252, 1) 100%)'
       }} 
     />
   );
@@ -809,10 +887,10 @@ const AIPredictions = () => {
       {/* Main Dashboard */}
       <section className="relative z-10 py-8 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-7xl">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 gap-8">
             
-            {/* Interactive Ocean Map - Left Side */}
-            <div className="lg:col-span-2">
+            {/* Interactive Ocean Map - Full Width */}
+            <div className="w-full">
               <Card className="h-full backdrop-blur-md bg-white/10 border-white/20 shadow-2xl relative overflow-hidden" style={{ zIndex: 1 }}>
                 <CardHeader>
                   <CardTitle className="flex items-center text-white">
@@ -841,55 +919,30 @@ const AIPredictions = () => {
                 </CardContent>
               </Card>
             </div>
-            
-            {/* Charts Panel - Right Side */}
-            <div className="space-y-6" style={{ position: 'relative', zIndex: 1 }}>
-              {/* Ocean Temperature Trend */}
-              <Card className="backdrop-blur-md bg-white/10 border-white/20 shadow-2xl">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-sm text-white">
-                    <Thermometer className="w-4 h-4 mr-2 text-blue-400" />
-                    Ocean Temperature Trend
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <OceanTempChart />
-                </CardContent>
-              </Card>
-              
-              {/* Fish Stock Levels */}
-              <Card className="backdrop-blur-md bg-white/10 border-white/20 shadow-2xl">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-sm text-white">
-                    <TrendingUp className="w-4 h-4 mr-2 text-teal-400" />
-                    Fish Stock Levels
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[120px] flex items-center justify-center text-gray-400">
-                    <div className="text-center">
-                      <TrendingUp className="w-6 h-6 mx-auto mb-2 text-teal-400" />
-                      <div className="text-xs">Stock Level: Moderate</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* Species Diversity */}
-              <Card className="backdrop-blur-md bg-white/10 border-white/20 shadow-2xl">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-sm text-white">
-                    <Dna className="w-4 h-4 mr-2 text-green-400" />
-                    Species Diversity
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <SpeciesDiversityChart />
-                </CardContent>
-              </Card>
-            </div>
-          </div>
 
+            {/* Interactive Prediction Chart - Full Width */}
+            {searchResults.length > 0 && (
+              <div className="w-full">
+                <Card className="h-full backdrop-blur-md bg-white/10 border-white/20 shadow-2xl relative overflow-hidden" style={{ zIndex: 1 }}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-white">
+                      <TrendingUp className="w-5 h-5 mr-2 text-green-400" />
+                      Interactive Prediction Chart
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="w-full rounded-lg overflow-hidden border border-white/20 relative backdrop-blur-sm" style={{ zIndex: 1 }}>
+                      <PredictionChart searchResults={searchResults} />
+                    </div>
+                    <div className="mt-4 text-xs text-blue-300 text-center">
+                      Hover over bars for detailed predictions | Data updates with each search
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </div>
+          
           {/* Search Results */}
           {searchResults.length > 0 && (
             <div className="mt-12 relative" style={{ zIndex: 1 }}>
