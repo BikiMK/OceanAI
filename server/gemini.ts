@@ -6,7 +6,10 @@ import { GoogleGenAI } from "@google/genai";
 //   - do not change this unless explicitly requested by the user
 
 // This API key is from Gemini Developer API Key, not vertex AI API Key
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "AIzaSyBiEy_smCappgZRIWH5oxE8HfTASvOxaQo" });
+if (!process.env.GEMINI_API_KEY) {
+  throw new Error("GEMINI_API_KEY environment variable is required");
+}
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export interface OceanPrediction {
   species: string;
@@ -91,5 +94,21 @@ export async function analyzeMarineQuery(query: string): Promise<boolean> {
   } catch (error) {
     console.error("Error analyzing marine query:", error);
     return false;
+  }
+}
+
+export async function generateTrendAnalysis(query: string, species: string, region: string): Promise<string> {
+  try {
+    const prompt = `Analyze the trend for ${species} in ${region} based on this query: "${query}". Provide a brief 2-3 sentence summary about population trends, environmental factors, and conservation status. Focus on whether the population is increasing, decreasing, or stable and why.`;
+    
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt
+    });
+
+    return response.text || `${species} populations in ${region} show mixed trends influenced by climate change and fishing pressure.`;
+  } catch (error) {
+    console.error("Error generating trend analysis:", error);
+    return `${species} populations in ${region} show mixed trends influenced by climate change and fishing pressure.`;
   }
 }

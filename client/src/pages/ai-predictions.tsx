@@ -453,7 +453,10 @@ const LeafletMap = ({ regionData }: { regionData?: any }) => {
   }, []);
 
   useEffect(() => {
-    if (!mapInstanceRef.current || !regionData || !regionData.region) return;
+    if (!mapInstanceRef.current || !regionData) return;
+    
+    console.log('Map update triggered with regionData:', regionData);
+    console.log('Coordinates:', regionData.coordinates);
 
     const map = mapInstanceRef.current;
     const L = (window as any).L;
@@ -466,29 +469,24 @@ const LeafletMap = ({ regionData }: { regionData?: any }) => {
       predictionMarkerRef.current = null;
     }
 
-    // Define region coordinates with fallback
-    const regionCoordinates: { [key: string]: [number, number] } = {
-      'pacific': [20, -150],
-      'atlantic': [40, -30],
-      'mediterranean': [38, 15],
-      'north': [60, -10],
-      'south': [-30, 20],
-      'indian': [-20, 80],
-      'arctic': [75, 0],
-      'gulf': [25, -90],
-      'sea': [35, 25],
-      'ocean': [0, 0]
-    };
-
-    // Get region and coordinates, fallback to 'ocean' if invalid
-    const region = regionData.region?.toLowerCase() || 'ocean';
-    const coordinates = regionCoordinates[region] || regionCoordinates['ocean'];
+    // Use coordinates from backend API response or fallback
+    const coordinates: [number, number] = regionData.coordinates ? 
+      [regionData.coordinates.lat, regionData.coordinates.lng] : [0, 0];
+    const zoom = regionData.coordinates?.zoom || 5;
+    const bbox = regionData.coordinates?.bbox;
 
     // Update map view to new coordinates with animation
-    map.flyTo(coordinates, 5, {
-      animate: true,
-      duration: 1.5 // Smooth transition for 1.5 seconds
-    });
+    if (bbox && bbox.length === 4) {
+      // Use bounding box for better fit
+      const bounds = [[bbox[0], bbox[1]], [bbox[2], bbox[3]]];
+      map.fitBounds(bounds, { animate: true, duration: 1.5 });
+    } else {
+      // Fallback to center coordinates
+      map.flyTo(coordinates, zoom, {
+        animate: true,
+        duration: 1.5
+      });
+    }
 
     // Create custom prediction marker icon
     const predictionIcon = L.divIcon({
@@ -537,7 +535,7 @@ const LeafletMap = ({ regionData }: { regionData?: any }) => {
         </div>
         <div style="margin-bottom: 6px;">
           <span style="font-size: 10px; color: #64748b;">REGION_SCOPE:</span>
-          <div style="font-size: 11px; color: #334155;">${regionData.region || 'Unknown'}</div>
+          <div style="font-size: 11px; color: #334155;">${regionData.regionCanonical || regionData.region || 'Unknown'}</div>
         </div>
         <div style="margin-bottom: 8px;">
           <span style="font-size: 10px; color: #64748b;">STOCK_STATUS:</span>
@@ -920,8 +918,71 @@ const AIPredictions = () => {
               </Card>
             </div>
 
+            {/* Ocean Metrics Display for Ocean/Composite Queries */}
+            {rawModelOutput?.oceanMetrics && (
+              <div className="w-full">
+                <Card className="h-full backdrop-blur-md bg-white/10 border-white/20 shadow-2xl relative overflow-hidden" style={{ zIndex: 1 }}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-white">
+                      <Thermometer className="w-5 h-5 mr-2 text-blue-400" />
+                      Ocean Environmental Data
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                      <div className="text-center p-4 rounded-lg bg-white/5 border border-white/20">
+                        <div className="text-2xl font-bold text-cyan-400">{rawModelOutput.oceanMetrics.temperatureC}°C</div>
+                        <div className="text-xs text-white/70">Temperature</div>
+                      </div>
+                      <div className="text-center p-4 rounded-lg bg-white/5 border border-white/20">
+                        <div className="text-2xl font-bold text-green-400">{rawModelOutput.oceanMetrics.salinityPSU}</div>
+                        <div className="text-xs text-white/70">Salinity (PSU)</div>
+                      </div>
+                      <div className="text-center p-4 rounded-lg bg-white/5 border border-white/20">
+                        <div className="text-2xl font-bold text-purple-400">{rawModelOutput.oceanMetrics.pH}</div>
+                        <div className="text-xs text-white/70">pH Level</div>
+                      </div>
+                      <div className="text-center p-4 rounded-lg bg-white/5 border border-white/20">
+                        <div className="text-lg font-bold text-yellow-400">{rawModelOutput.oceanMetrics.popularFishes?.length || 0}</div>
+                        <div className="text-xs text-white/70">Popular Species</div>
+                      </div>
+                    </div>
+                    {rawModelOutput.oceanMetrics.popularFishes && rawModelOutput.oceanMetrics.popularFishes.length > 0 && (
+                      <div>
+                        <h4 className="text-white font-semibold mb-3">Popular Fish Species in this Region</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {rawModelOutput.oceanMetrics.popularFishes.map((fish: string, index: number) => (
+                            <Badge key={index} className="bg-blue-900/50 text-blue-300 border-blue-700/50 backdrop-blur-sm">
+                              {fish}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Trend Analysis for Composite Queries */}
+            {rawModelOutput?.trendSummary && (
+              <div className="w-full">
+                <Card className="h-full backdrop-blur-md bg-white/10 border-white/20 shadow-2xl relative overflow-hidden" style={{ zIndex: 1 }}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-white">
+                      <Activity className="w-5 h-5 mr-2 text-orange-400" />
+                      Population Trend Analysis
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <p className="text-white/90 leading-relaxed">{rawModelOutput.trendSummary}</p>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
             {/* Interactive Prediction Chart - Full Width */}
-            {searchResults.length > 0 && (
+            {searchResults.length > 0 && rawModelOutput?.fishPopulation && (
               <div className="w-full">
                 <Card className="h-full backdrop-blur-md bg-white/10 border-white/20 shadow-2xl relative overflow-hidden" style={{ zIndex: 1 }}>
                   <CardHeader>
