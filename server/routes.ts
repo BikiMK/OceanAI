@@ -372,6 +372,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         treeData: treeData.newick,
         species: treeData.species,
         metadata: treeData.metadata,
+        geneticMetrics: treeData.geneticMetrics,
+        sampleStatus: treeData.sampleStatus,
         timestamp: new Date().toISOString()
       });
 

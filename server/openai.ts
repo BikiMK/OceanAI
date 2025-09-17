@@ -138,6 +138,16 @@ export interface PhylogeneticTreeData {
     confidence: number;
     method: string;
   };
+  geneticMetrics: {
+    name: string;
+    value: string;
+    percentage: number;
+  }[];
+  sampleStatus: {
+    status: string;
+    count: string;
+    color: string;
+  }[];
 }
 
 // Generate phylogenetic tree data from .pkl file information
@@ -155,12 +165,22 @@ export async function generatePhylogeneticTree(fileName: string, fileSize: numbe
         depth: 4,
         confidence: 0.85,
         method: "Maximum Likelihood (Fallback)"
-      }
+      },
+      geneticMetrics: [
+        { name: "Heterozygosity", value: "0.68", percentage: 68 },
+        { name: "Allelic Richness", value: "4.7", percentage: 78 },
+        { name: "FST Index", value: "0.09", percentage: 9 }
+      ],
+      sampleStatus: [
+        { status: "Processed", count: "847", color: "text-green-400" },
+        { status: "In Queue", count: "156", color: "text-yellow-400" },
+        { status: "Failed", count: "8", color: "text-red-400" }
+      ]
     };
   }
 
   try {
-    const prompt = `You are a phylogenetic analysis expert. Based on a .pkl file named "${fileName}" with size ${fileSize} bytes, generate realistic phylogenetic tree data for marine fish species.
+    const prompt = `You are a phylogenetic analysis expert. Based on a .pkl file named "${fileName}" with size ${fileSize} bytes, generate realistic phylogenetic tree data for marine fish species along with genetic analysis metrics.
 
     Please provide a JSON response with:
     {
@@ -171,10 +191,30 @@ export async function generatePhylogeneticTree(fileName: string, fileSize: numbe
         "depth": "tree depth (realistic value 3-6)",
         "confidence": "confidence score 0.8-0.95",
         "method": "Maximum Likelihood"
-      }
+      },
+      "geneticMetrics": [
+        {"name": "Heterozygosity", "value": "0.XX", "percentage": XX},
+        {"name": "Allelic Richness", "value": "X.X", "percentage": XX},
+        {"name": "FST Index", "value": "0.XX", "percentage": XX}
+      ],
+      "sampleStatus": [
+        {"status": "Processed", "count": "XXX", "color": "text-green-400"},
+        {"status": "In Queue", "count": "XX", "color": "text-yellow-400"},
+        {"status": "Failed", "count": "X", "color": "text-red-400"}
+      ]
     }
 
     Use realistic marine fish species names like: Thunnus_albacares, Gadus_morhua, Salmo_salar, Clupea_harengus, Oncorhynchus_mykiss, Sebastes_norvegicus, Pleuronectes_platessa, Merlangius_merlangus, etc.
+    
+    Generate realistic genetic diversity metrics:
+    - Heterozygosity: 0.50-0.85 (percentage = value * 100)
+    - Allelic Richness: 3.0-6.5 (percentage = (value/6.5) * 100)
+    - FST Index: 0.05-0.25 (percentage = value * 100)
+    
+    Generate realistic sample counts that correlate with file size:
+    - Processed: 500-2000 samples
+    - In Queue: 10-200 samples  
+    - Failed: 2-30 samples
     
     Make the Newick string scientifically plausible with reasonable branch lengths (0.01-0.5).`;
 
@@ -207,7 +247,17 @@ export async function generatePhylogeneticTree(fileName: string, fileSize: numbe
         depth: result.metadata?.depth || 4,
         confidence: Math.max(0.8, Math.min(0.95, result.metadata?.confidence || 0.89)),
         method: result.metadata?.method || "Maximum Likelihood"
-      }
+      },
+      geneticMetrics: Array.isArray(result.geneticMetrics) ? result.geneticMetrics : [
+        { name: "Heterozygosity", value: "0.71", percentage: 71 },
+        { name: "Allelic Richness", value: "5.1", percentage: 78 },
+        { name: "FST Index", value: "0.13", percentage: 13 }
+      ],
+      sampleStatus: Array.isArray(result.sampleStatus) ? result.sampleStatus : [
+        { status: "Processed", count: "1,187", color: "text-green-400" },
+        { status: "In Queue", count: "94", color: "text-yellow-400" },
+        { status: "Failed", count: "15", color: "text-red-400" }
+      ]
     };
 
   } catch (error) {
@@ -222,7 +272,17 @@ export async function generatePhylogeneticTree(fileName: string, fileSize: numbe
         depth: 4,
         confidence: 0.85,
         method: "Maximum Likelihood (Fallback)"
-      }
+      },
+      geneticMetrics: [
+        { name: "Heterozygosity", value: "0.69", percentage: 69 },
+        { name: "Allelic Richness", value: "4.8", percentage: 74 },
+        { name: "FST Index", value: "0.11", percentage: 11 }
+      ],
+      sampleStatus: [
+        { status: "Processed", count: "1,089", color: "text-green-400" },
+        { status: "In Queue", count: "78", color: "text-yellow-400" },
+        { status: "Failed", count: "11", color: "text-red-400" }
+      ]
     };
   }
 }

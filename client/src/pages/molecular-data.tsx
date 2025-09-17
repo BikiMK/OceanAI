@@ -12,17 +12,20 @@ const MolecularData = () => {
   const [phylogeneticData, setPhylogeneticData] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const geneticMetrics = [
+  // Default static data, will be replaced when .pkl file is uploaded
+  const [geneticMetrics, setGeneticMetrics] = useState([
     { name: "Heterozygosity", value: "0.74", percentage: 74 },
     { name: "Allelic Richness", value: "5.2", percentage: 87 },
     { name: "FST Index", value: "0.12", percentage: 12 },
-  ];
+  ]);
 
-  const sampleStatus = [
+  const [sampleStatus, setSampleStatus] = useState([
     { status: "Processed", count: "1,247", color: "text-green-400" },
     { status: "In Queue", count: "89", color: "text-yellow-400" },
     { status: "Failed", count: "12", color: "text-red-400" },
-  ];
+  ]);
+
+  const [dataSource, setDataSource] = useState<'default' | 'uploaded'>('default');
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -52,6 +55,16 @@ const MolecularData = () => {
 
       const result = await response.json();
       setPhylogeneticData(result);
+      
+      // Update genetic metrics and sample status with data from .pkl file
+      if (result.geneticMetrics) {
+        setGeneticMetrics(result.geneticMetrics);
+      }
+      if (result.sampleStatus) {
+        setSampleStatus(result.sampleStatus);
+      }
+      setDataSource('uploaded');
+      
       setUploadStatus('success');
       setUploadMessage(`Successfully processed ${result.fileName}! Tree updated with ${result.species.length} species.`);
     } catch (error) {
@@ -77,7 +90,16 @@ const MolecularData = () => {
           <div className="space-y-6">
             <Card className="bg-gray-800/70 border-gray-600">
               <CardHeader>
-                <CardTitle className="text-white">Genetic Diversity</CardTitle>
+                <CardTitle className="text-white flex items-center justify-between">
+                  Genetic Diversity
+                  <span className={`text-xs px-2 py-1 rounded ${
+                    dataSource === 'uploaded' 
+                      ? 'text-green-400 bg-green-500/10' 
+                      : 'text-gray-400 bg-gray-500/10'
+                  }`} data-testid="genetic-data-source">
+                    {dataSource === 'uploaded' ? 'From .pkl file' : 'Default data'}
+                  </span>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -89,7 +111,7 @@ const MolecularData = () => {
                       </div>
                       <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-gradient-to-r from-blue-500 to-teal-400 rounded-full"
+                          className="h-full bg-gradient-to-r from-blue-500 to-teal-400 rounded-full transition-all duration-500"
                           style={{ width: `${metric.percentage}%` }}
                         ></div>
                       </div>
@@ -101,14 +123,23 @@ const MolecularData = () => {
             
             <Card className="bg-gray-800/70 border-gray-600">
               <CardHeader>
-                <CardTitle className="text-white">Sample Status</CardTitle>
+                <CardTitle className="text-white flex items-center justify-between">
+                  Sample Status
+                  <span className={`text-xs px-2 py-1 rounded ${
+                    dataSource === 'uploaded' 
+                      ? 'text-green-400 bg-green-500/10' 
+                      : 'text-gray-400 bg-gray-500/10'
+                  }`} data-testid="sample-data-source">
+                    {dataSource === 'uploaded' ? 'From .pkl file' : 'Default data'}
+                  </span>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {sampleStatus.map((item, index) => (
                     <div key={index} className="flex items-center justify-between">
                       <span className="text-sm text-gray-300">{item.status}</span>
-                      <span className={`${item.color} font-medium`} data-testid={`sample-${item.status.toLowerCase().replace(' ', '-')}`}>
+                      <span className={`${item.color} font-medium transition-all duration-500`} data-testid={`sample-${item.status.toLowerCase().replace(' ', '-')}`}>
                         {item.count}
                       </span>
                     </div>
