@@ -1,13 +1,12 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
-const data = [
-  { name: 'Fish', value: 45, color: 'hsl(199 89% 48%)' },
-  { name: 'Crustaceans', value: 25, color: 'hsl(187 85% 53%)' },
-  { name: 'Mollusks', value: 20, color: 'hsl(166 76% 60%)' },
-  { name: 'Other', value: 10, color: 'hsl(142 71% 45%)' },
-];
+const defaultData: Array<{name: string, value: number, color: string, count: string}> = [];
 
-const SpeciesDiversityChart = () => {
+interface SpeciesDiversityChartProps {
+  data?: Array<{name: string, value: number, color: string, count: string}>;
+}
+
+const SpeciesDiversityChart = ({ data = defaultData }: SpeciesDiversityChartProps) => {
   return (
     <div className="w-full h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
@@ -32,6 +31,9 @@ const SpeciesDiversityChart = () => {
               borderRadius: '8px',
               color: 'hsl(213 31% 91%)'
             }}
+            formatter={(value, name, props) => [
+              `${value}% (${props.payload?.count || 'N/A'} fish)`, name
+            ]}
           />
           <Legend 
             wrapperStyle={{ 

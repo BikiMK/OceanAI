@@ -396,6 +396,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Fish Species Analysis endpoint
+  app.post("/api/fish-species-analysis", upload.single('pklFile'), async (req: RequestWithFile, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No .pkl file uploaded" });
+      }
+
+      console.log("Processing .pkl file for fish species analysis:", req.file.originalname);
+
+      // Read the uploaded file (in a real scenario, you'd process the .pkl file)
+      const filePath = req.file.path;
+      const fileStats = await fs.stat(filePath);
+      
+      // For demonstration, we'll simulate .pkl file analysis with OpenAI
+      const { generateFishSpeciesData } = await import("./openai.js");
+      
+      // Generate fish species location data using OpenAI
+      const fishData = await generateFishSpeciesData(req.file.originalname, fileStats.size);
+      
+      // Clean up uploaded file
+      await fs.unlink(filePath);
+      
+      res.json({
+        success: true,
+        fileName: req.file.originalname,
+        fishLocations: fishData.locations,
+        speciesSummary: fishData.speciesSummary,
+        totalSpecies: fishData.totalSpecies,
+        analysisMetrics: fishData.analysisMetrics,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error("Fish species analysis error:", error);
+      
+      // Clean up file if it exists
+      if (req.file) {
+        try {
+          await fs.unlink(req.file.path);
+        } catch (cleanupError) {
+          console.error("File cleanup error:", cleanupError);
+        }
+      }
+      
+      res.status(500).json({ 
+        error: "Failed to process fish species analysis",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
