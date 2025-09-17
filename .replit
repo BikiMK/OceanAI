@@ -4,7 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["glibcLocales"]
+packages = ["glibcLocales", "libxcrypt"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -18,10 +18,6 @@ externalPort = 80
 [[ports]]
 localPort = 8000
 externalPort = 8000
-
-[[ports]]
-localPort = 46461
-externalPort = 3000
 
 [env]
 PORT = "5000"

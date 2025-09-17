@@ -26,7 +26,7 @@ model = None
 model_loaded = False
 
 try:
-    model_validator = ModelValidator("fish_stock_model.pkl")
+    model_validator = ModelValidator("oceanai_model_v1.pkl")
     model = model_validator.model
     model_loaded = True
     logger.info("Model loaded successfully for API")
@@ -300,4 +300,4 @@ async def model_info():
 # Run the app if executed directly
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
