@@ -20,7 +20,7 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold text-foreground mb-4">Research Team</h3>
             <div className="space-y-2 text-sm text-muted-foreground">
-              <p>👨‍💻 Biki Mukherjee – Frontend Developer & Project Lead</p>
+              <p>👨‍💻 Biki Mukherjee – Full-Stack Developer & Project Lead</p>
               <p>👨‍💻 Rupsa Pramanik – Backend & API Integration</p>
               <p>👨‍💻 Sayan Samadder – Data Analyst & Visualization</p>
               <p>👩‍💻 Debjit Chakraborty – AI/ML & Model Training</p>

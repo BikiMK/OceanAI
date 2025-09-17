@@ -1,4 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Upload, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 
 // Mock Card components since we don't have access to shadcn/ui
 const Card = ({ children, className = "" }) => (
@@ -55,7 +59,7 @@ const OceanTempChart = () => {
 };
 
 // Leaflet Map Component
-const LeafletMap = () => {
+const LeafletMap = ({ fishData = null }) => {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
 
@@ -95,8 +99,8 @@ const LeafletMap = () => {
           attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // Ocean monitoring stations data
-        const oceanStations = [
+        // Use fish species data if available, otherwise default ocean stations
+        const mapData = fishData ? fishData.fishLocations : [
           {
             lat: 35.6762,
             lng: 139.6503,
@@ -147,28 +151,57 @@ const LeafletMap = () => {
           }
         ];
 
-        // Add markers for ocean monitoring stations
-        oceanStations.forEach(station => {
-          const marker = window.L.circleMarker([station.lat, station.lng], {
+        // Add markers for map data (either fish species or ocean stations)
+        mapData.forEach(location => {
+          let markerColor, popupContent;
+          
+          if (fishData) {
+            // Fish species data
+            markerColor = location.markerColor || '#FF6B6B';
+            popupContent = `
+              <div class="p-2">
+                <h3 class="font-semibold text-sm mb-2">${location.name}</h3>
+                <div class="space-y-1 text-xs">
+                  <div><strong>Species Count:</strong> ${location.speciesCount}</div>
+                  <div><strong>Abundance:</strong> ${location.abundance}</div>
+                  <div><strong>Temperature:</strong> ${location.temperature}</div>
+                  <div><strong>Depth:</strong> ${location.depth}</div>
+                  <div><strong>Salinity:</strong> ${location.salinity}</div>
+                  <div class="mt-2">
+                    <strong>Species Found:</strong>
+                    <div class="mt-1">
+                      ${location.species.map(species => `<span class="inline-block bg-blue-100 text-blue-800 text-xs px-1 py-0.5 rounded mr-1 mb-1">${species.replace('_', ' ')}</span>`).join('')}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          } else {
+            // Ocean station data
+            markerColor = getColorByTemp(parseFloat(location.temp));
+            popupContent = `
+              <div class="p-2">
+                <h3 class="font-semibold text-sm mb-2">${location.name}</h3>
+                <div class="space-y-1 text-xs">
+                  <div><strong>Temperature:</strong> ${location.temp}</div>
+                  <div><strong>pH Level:</strong> ${location.ph}</div>
+                  <div><strong>Depth:</strong> ${location.depth}</div>
+                </div>
+              </div>
+            `;
+          }
+
+          const marker = window.L.circleMarker([location.lat, location.lng], {
             radius: 8,
-            fillColor: getColorByTemp(parseFloat(station.temp)),
+            fillColor: markerColor,
             color: '#ffffff',
             weight: 2,
             opacity: 1,
             fillOpacity: 0.8
           }).addTo(map);
 
-          // Add popup with station data
-          marker.bindPopup(`
-            <div class="p-2">
-              <h3 class="font-semibold text-sm mb-2">${station.name}</h3>
-              <div class="space-y-1 text-xs">
-                <div><strong>Temperature:</strong> ${station.temp}</div>
-                <div><strong>pH Level:</strong> ${station.ph}</div>
-                <div><strong>Depth:</strong> ${station.depth}</div>
-              </div>
-            </div>
-          `);
+          // Add popup with location data
+          marker.bindPopup(popupContent);
 
           // Add hover effect
           marker.on('mouseover', function() {
@@ -190,27 +223,53 @@ const LeafletMap = () => {
         const legend = window.L.control({ position: 'bottomright' });
         legend.onAdd = function(map) {
           const div = window.L.DomUtil.create('div', 'legend');
-          div.innerHTML = `
-            <div style="background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-  <h4 style="margin: 0 0 8px 0; color: black; font-size: 12px; font-weight: bold;">Ocean Temperature</h4>
-  <div style="display: flex; align-items: center; margin: 4px 0; font-size: 10px; color: black;">
-    <div style="width: 12px; height: 12px; background: #0066cc; border-radius: 50%; margin-right: 6px;"></div>
-    Cold (&lt;15°C)
-  </div>
-  <div style="display: flex; align-items: center; margin: 4px 0; font-size: 10px; color: black;">
-    <div style="width: 12px; height: 12px; background: #00cc66; border-radius: 50%; margin-right: 6px;"></div>
-    Moderate (15-20°C)
-  </div>
-  <div style="display: flex; align-items: center; margin: 4px 0; font-size: 10px; color: black;">
-    <div style="width: 12px; height: 12px; background: #ff6600; border-radius: 50%; margin-right: 6px;"></div>
-    Warm (20-25°C)
-  </div>
-  <div style="display: flex; align-items: center; margin: 4px 0; font-size: 10px; color: black;">
-    <div style="width: 12px; height: 12px; background: #cc0000; border-radius: 50%; margin-right: 6px;"></div>
-    Hot (&gt;25°C)
-  </div>
-</div>
-          `;
+          
+          if (fishData) {
+            div.innerHTML = `
+              <div style="background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <h4 style="margin: 0 0 8px 0; color: black; font-size: 12px; font-weight: bold;">Fish Species Distribution</h4>
+                <div style="display: flex; align-items: center; margin: 4px 0; font-size: 10px; color: black;">
+                  <div style="width: 12px; height: 12px; background: #96CEB4; border-radius: 50%; margin-right: 6px;"></div>
+                  Low Abundance
+                </div>
+                <div style="display: flex; align-items: center; margin: 4px 0; font-size: 10px; color: black;">
+                  <div style="width: 12px; height: 12px; background: #4ECDC4; border-radius: 50%; margin-right: 6px;"></div>
+                  Medium Abundance
+                </div>
+                <div style="display: flex; align-items: center; margin: 4px 0; font-size: 10px; color: black;">
+                  <div style="width: 12px; height: 12px; background: #FF6B6B; border-radius: 50%; margin-right: 6px;"></div>
+                  High Abundance
+                </div>
+                <div style="display: flex; align-items: center; margin: 4px 0; font-size: 10px; color: black;">
+                  <div style="width: 12px; height: 12px; background: #45B7D1; border-radius: 50%; margin-right: 6px;"></div>
+                  Very High Abundance
+                </div>
+              </div>
+            `;
+          } else {
+            div.innerHTML = `
+              <div style="background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <h4 style="margin: 0 0 8px 0; color: black; font-size: 12px; font-weight: bold;">Ocean Temperature</h4>
+                <div style="display: flex; align-items: center; margin: 4px 0; font-size: 10px; color: black;">
+                  <div style="width: 12px; height: 12px; background: #0066cc; border-radius: 50%; margin-right: 6px;"></div>
+                  Cold (&lt;15°C)
+                </div>
+                <div style="display: flex; align-items: center; margin: 4px 0; font-size: 10px; color: black;">
+                  <div style="width: 12px; height: 12px; background: #00cc66; border-radius: 50%; margin-right: 6px;"></div>
+                  Moderate (15-20°C)
+                </div>
+                <div style="display: flex; align-items: center; margin: 4px 0; font-size: 10px; color: black;">
+                  <div style="width: 12px; height: 12px; background: #ff6600; border-radius: 50%; margin-right: 6px;"></div>
+                  Warm (20-25°C)
+                </div>
+                <div style="display: flex; align-items: center; margin: 4px 0; font-size: 10px; color: black;">
+                  <div style="width: 12px; height: 12px; background: #cc0000; border-radius: 50%; margin-right: 6px;"></div>
+                  Hot (&gt;25°C)
+                </div>
+              </div>
+            `;
+          }
+          
           return div;
         };
         legend.addTo(map);
@@ -236,7 +295,7 @@ const LeafletMap = () => {
         mapInstanceRef.current = null;
       }
     };
-  }, []);
+  }, [fishData]);
 
   return (
     <div className="relative">
@@ -249,7 +308,8 @@ const LeafletMap = () => {
           position: 'relative'
         }}
       />
-      <style jsx>{`
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .leaflet-container {
           z-index: 1 !important;
         }
@@ -262,12 +322,57 @@ const LeafletMap = () => {
         .leaflet-tooltip {
           z-index: 3 !important;
         }
-      `}</style>
+        `
+      }} />
     </div>
   );
 };
 
 const OceanData = () => {
+  const [uploadStatus, setUploadStatus] = useState('idle');
+  const [uploadMessage, setUploadMessage] = useState('');
+  const [fishSpeciesData, setFishSpeciesData] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.pkl')) {
+      setUploadStatus('error');
+      setUploadMessage('Please select a .pkl file');
+      return;
+    }
+
+    setUploadStatus('uploading');
+    setUploadMessage('Analyzing fish species data...');
+
+    const formData = new FormData();
+    formData.append('pklFile', file);
+
+    try {
+      const response = await fetch('/api/fish-species-analysis', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      setFishSpeciesData(result);
+      setUploadStatus('success');
+      setUploadMessage(`Successfully analyzed ${result.fileName}! Found ${result.totalSpecies} species across ${result.fishLocations.length} locations.`);
+    } catch (error) {
+      setUploadStatus('error');
+      setUploadMessage(error instanceof Error ? error.message : 'Upload failed');
+    }
+  };
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
+  };
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8 relative">
       <div className="container mx-auto max-w-7xl">
@@ -280,13 +385,65 @@ const OceanData = () => {
           {/* Interactive Leaflet Map */}
           <div className="lg:col-span-2">
             <Card>
-              <CardHeader>
-                <CardTitle>Global Ocean Monitoring Stations</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>{fishSpeciesData ? 'Fish Species Distribution Map' : 'Global Ocean Monitoring Stations'}</CardTitle>
+                <div className="flex items-center gap-2">
+                  <Input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pkl"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <Button
+                    onClick={triggerFileUpload}
+                    disabled={uploadStatus === 'uploading'}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    size="sm"
+                  >
+                    {uploadStatus === 'uploading' ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Fish Data (.pkl)
+                      </>
+                    )}
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
-                <LeafletMap />
+                {/* Upload Status */}
+                {uploadMessage && (
+                  <Alert className={`mb-4 ${
+                    uploadStatus === 'success' ? 'border-green-500 bg-green-500/10' :
+                    uploadStatus === 'error' ? 'border-red-500 bg-red-500/10' :
+                    'border-blue-500 bg-blue-500/10'
+                  }`}>
+                    {uploadStatus === 'success' && <CheckCircle className="h-4 w-4 text-green-500" />}
+                    {uploadStatus === 'error' && <AlertCircle className="h-4 w-4 text-red-500" />}
+                    {uploadStatus === 'uploading' && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
+                    <AlertDescription className={
+                      uploadStatus === 'success' ? 'text-green-300' :
+                      uploadStatus === 'error' ? 'text-red-300' :
+                      'text-blue-300'
+                    }>
+                      {uploadMessage}
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
+                <LeafletMap fishData={fishSpeciesData} />
                 <div className="mt-4 text-sm text-gray-500">
-                  <p>Click on markers to view detailed station information. Colors represent temperature ranges.</p>
+                  <p>
+                    {fishSpeciesData 
+                      ? 'Click on markers to view fish species information. Colors represent abundance levels.'
+                      : 'Click on markers to view detailed station information. Colors represent temperature ranges. Upload a .pkl file to analyze fish species distribution.'
+                    }
+                  </p>
                 </div>
               </CardContent>
             </Card>
