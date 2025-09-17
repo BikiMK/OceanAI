@@ -61,7 +61,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // AI Prediction - Enhanced with accurate coordinates and ocean data
+  // Home page search - ML model first, then ChatGPT fallback
+  app.post("/api/search", async (req, res) => {
+    try {
+      const { query } = req.body;
+      
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ error: "Search query is required" });
+      }
+
+      // Step 1: Try ML model (.pkl format) first
+      let mlResult = null;
+      let mlWorked = false;
+
+      try {
+        console.log("Attempting ML model search for:", query);
+        
+        const pythonResponse = await fetch("http://localhost:8000/predict", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ query }),
+        });
+
+        if (pythonResponse.ok) {
+          mlResult = await pythonResponse.json();
+          mlWorked = true;
+          console.log("ML model search successful");
+
+          // Format ML response for home page
+          let mlAnswer = `Based on our ML model analysis:\n\n`;
+          mlAnswer += `**Species:** ${mlResult.species || 'Unknown'}\n`;
+          mlAnswer += `**Region:** ${mlResult.region || 'Unknown'}\n`;
+          mlAnswer += `**Population Trend:** ${mlResult.fishPopulation || 'N/A'}\n`;
+          mlAnswer += `**Climate Impact:** ${mlResult.climateChange || 'N/A'}\n`;
+          mlAnswer += `**Genetic Diversity:** ${mlResult.geneticDiversity || 'N/A'}\n`;
+          mlAnswer += `**Confidence:** ${mlResult.confidence || 'N/A'}\n\n`;
+          mlAnswer += `**Prediction:** ${mlResult.prediction || 'Analysis based on our trained marine ecosystem model.'}`;
+
+          return res.json({
+            query: query,
+            answer: mlAnswer,
+            source: "OceanAI ML Model",
+            confidence: parseFloat(mlResult.confidence?.replace('%', '') || '85') / 100,
+            related_topics: ["Marine predictions", "Fish populations", "Ocean modeling", "AI analysis"],
+            timestamp: new Date().toISOString()
+          });
+        } else {
+          console.log("ML model returned error, trying fallback");
+        }
+      } catch (error) {
+        console.log("ML model unavailable, trying fallback:", error.message);
+      }
+
+      // Step 2: Try marine knowledge database
+      const { searchMarineKnowledge, formatMarineKnowledgeResponse, getOceanTopicInfo } = await import("./marineKnowledge.js");
+      
+      const marineEntry = searchMarineKnowledge(query);
+      if (marineEntry) {
+        const detailedResponse = formatMarineKnowledgeResponse(marineEntry);
+        return res.json({
+          query: query,
+          answer: detailedResponse,
+          source: "OceanAI Knowledge Base",
+          confidence: 0.95,
+          related_topics: marineEntry.relatedTopics,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      const oceanInfo = getOceanTopicInfo(query);
+      if (oceanInfo) {
+        return res.json({
+          query: query,
+          answer: oceanInfo,
+          source: "OceanAI Science Database",
+          confidence: 0.90,
+          related_topics: ["Ocean science", "Marine biology", "Climate change", "Environmental science"],
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Step 3: Final fallback to ChatGPT
+      try {
+        console.log("Trying ChatGPT fallback for:", query);
+        const { generateBasicSearch } = await import("./openai.js");
+        const chatGPTResult = await generateBasicSearch(query);
+        
+        return res.json({
+          query: query,
+          answer: chatGPTResult.answer,
+          source: "OceanAI Assistant",
+          confidence: chatGPTResult.confidence,
+          related_topics: chatGPTResult.related_topics,
+          timestamp: new Date().toISOString()
+        });
+      } catch (chatGPTError) {
+        console.log("ChatGPT also failed, using default response");
+      }
+      
+      // Final fallback
+      const generalResponse = `I can provide information about marine life, ocean science, and environmental topics. Try searching for specific fish species like "hilsa", "tuna", "salmon", "cod", or ocean topics like "ocean temperature", "coral reefs", "marine biodiversity", or "sea level rise".`;
+      
+      res.json({
+        query: query,
+        answer: generalResponse,
+        source: "OceanAI",
+        confidence: 0.70,
+        related_topics: ["Marine biology", "Ocean science", "Fish species", "Environmental science", "Climate change"],
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error("Search error:", error);
+      res.status(500).json({ 
+        error: "Failed to process search",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // AI Prediction - ML model with Gemini fallback
   app.post("/api/ml-predict", async (req, res) => {
     try {
       const { query } = req.body;
@@ -70,42 +191,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Query is required" });
       }
 
-      // Import enhanced parsing and data
+      // First, try the ML model via Python backend
+      let mlModelResult = null;
+      let mlModelWorked = false;
+
+      try {
+        console.log("Attempting ML model prediction...");
+        
+        // Try to call the Python ML model
+        const pythonResponse = await fetch("http://localhost:8000/predict", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ query }),
+        });
+
+        if (pythonResponse.ok) {
+          mlModelResult = await pythonResponse.json();
+          mlModelWorked = true;
+          console.log("ML model prediction successful");
+        } else {
+          console.log("ML model returned error, falling back to Gemini");
+        }
+      } catch (error) {
+        console.log("ML model unavailable, falling back to Gemini:", error.message);
+      }
+
+      // If ML model worked, return its results
+      if (mlModelWorked && mlModelResult) {
+        // Import enhanced parsing and data for coordinate resolution
+        const { parseMarineQuery, resolveRegionCoordinates } = await import("./queryParser.js");
+        const { findMarineRegion } = await import("../shared/marineGazetteer.js");
+        
+        const parsedQuery = parseMarineQuery(query);
+        const coordinates = resolveRegionCoordinates(parsedQuery.regionRaw);
+        
+        let regionData = null;
+        if (parsedQuery.regionRaw) {
+          regionData = findMarineRegion(parsedQuery.regionRaw);
+        }
+
+        const response = {
+          queryType: parsedQuery.queryType || 'species',
+          coordinates,
+          species: mlModelResult.species || parsedQuery.species,
+          region: mlModelResult.region || parsedQuery.regionRaw,
+          regionCanonical: regionData?.canonicalName || mlModelResult.region,
+          stock_status: mlModelResult.fishPopulation?.includes('+') ? 'Increasing' : 
+                       mlModelResult.fishPopulation?.includes('-') ? 'Declining' : 'Stable',
+          fishPopulation: mlModelResult.fishPopulation,
+          climateChange: mlModelResult.climateChange,
+          geneticDiversity: mlModelResult.geneticDiversity,
+          confidence: mlModelResult.confidence,
+          prediction_summary: mlModelResult.prediction || "ML model prediction based on trained data",
+          model_used: true,
+          source: "ML_MODEL"
+        };
+
+        return res.json(response);
+      }
+
+      // Fallback to Gemini API if ML model failed
+      console.log("Using Gemini API fallback...");
+      
       const { parseMarineQuery, resolveRegionCoordinates } = await import("./queryParser.js");
       const { findMarineRegion } = await import("../shared/marineGazetteer.js");
       const { generateOceanPrediction, generateTrendAnalysis } = await import("./gemini.js");
       
-      // Parse the query to understand what user is asking for
       const parsedQuery = parseMarineQuery(query);
       const coordinates = resolveRegionCoordinates(parsedQuery.regionRaw);
       
-      // Build the response based on query type
       const response: any = {
         queryType: parsedQuery.queryType,
         coordinates,
-        model_used: false
+        model_used: false,
+        source: "GEMINI_FALLBACK"
       };
       
-      // Add species information if found
       if (parsedQuery.species) {
         response.species = parsedQuery.species;
         response.scientificName = parsedQuery.scientificName;
       }
       
-      // Add region information if found
       if (parsedQuery.regionRaw) {
         const regionData = findMarineRegion(parsedQuery.regionRaw);
         if (regionData) {
           response.regionCanonical = regionData.canonicalName;
           
-          // For ocean or composite queries, include ocean metrics
           if (parsedQuery.queryType === 'ocean' || parsedQuery.queryType === 'composite') {
             response.oceanMetrics = regionData.oceanMetrics;
           }
         }
       }
       
-      // Generate AI predictions for species or composite queries
       if (parsedQuery.queryType === 'species' || parsedQuery.queryType === 'composite') {
         try {
           const predictionData = await generateOceanPrediction(query);
@@ -117,13 +296,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           response.prediction_summary = predictionData.prediction_summary;
           response.model_used = true;
           
-          // For composite queries, add trend analysis
           if (parsedQuery.queryType === 'composite') {
             response.trendSummary = await generateTrendAnalysis(query, parsedQuery.species || '', parsedQuery.regionRaw || '');
           }
         } catch (error) {
-          console.warn("Gemini prediction failed, using fallback:", error);
-          // Use fallback data for species queries
+          console.warn("Gemini prediction failed, using basic fallback:", error);
           response.stock_status = "Stable";
           response.fishPopulation = "+5.2%";
           response.climateChange = "-2.1%";

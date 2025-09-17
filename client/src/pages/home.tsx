@@ -1,11 +1,22 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Search, Waves, Fish, Dna, Globe, Zap, ChevronRight } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Search, Waves, Fish, Dna, Globe, Zap, ChevronRight, Sparkles, Brain } from "lucide-react";
+
+interface SearchResult {
+  answer: string;
+  source: string;
+  confidence: number;
+  related_topics: string[];
+}
 
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [currentMetric, setCurrentMetric] = useState(0);
+  const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   const metrics = [
     { label: "Ocean Data Points", value: "2.4B+", color: "from-cyan-400 to-blue-600" },
@@ -21,12 +32,45 @@ const Home = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleSearch = () => {
-    console.log("Searching for:", searchQuery);
-    // Navigate to search results
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    try {
+      const response = await fetch("/api/search", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query: searchQuery }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSearchResults(data);
+      } else {
+        console.error("Search failed:", response.statusText);
+        setSearchResults({
+          answer: "Sorry, I couldn't process your search at the moment. Please try again.",
+          source: "Error",
+          confidence: 0,
+          related_topics: []
+        });
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+      setSearchResults({
+        answer: "Sorry, I couldn't connect to the search service. Please try again.",
+        source: "Error",
+        confidence: 0,
+        related_topics: []
+      });
+    } finally {
+      setIsSearching(false);
+    }
   };
 
-  const handleQuickAction = (label) => {
+  const handleQuickAction = (label: string) => {
     console.log("Quick action triggered:", label);
     // Implement quick action logic here
   };
@@ -115,10 +159,20 @@ const Home = () => {
                   />
                   <Button
                     onClick={handleSearch}
-                    className="mr-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-8 py-4 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25"
+                    disabled={isSearching || !searchQuery.trim()}
+                    className="mr-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-8 py-4 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Zap className="w-5 h-5 mr-2" />
-                    Search
+                    {isSearching ? (
+                      <>
+                        <Brain className="w-5 h-5 mr-2 animate-pulse" />
+                        Searching...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-5 h-5 mr-2" />
+                        Search
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -145,6 +199,52 @@ const Home = () => {
                 ))}
               </div>
             </div>
+
+            {/* Search Results */}
+            {searchResults && (
+              <div className="mb-16 max-w-4xl mx-auto">
+                <Card className="bg-slate-800/90 backdrop-blur-xl border-slate-700/50 shadow-2xl">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-cyan-400 flex items-center gap-2">
+                        <Sparkles className="w-5 h-5" />
+                        Ocean Intelligence Response
+                      </CardTitle>
+                      <Badge variant="secondary" className="bg-cyan-500/20 text-cyan-300 border-cyan-500/30">
+                        Confidence: {Math.round(searchResults.confidence * 100)}%
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="text-slate-200 leading-relaxed text-lg">
+                      {searchResults.answer}
+                    </div>
+                    
+                    {searchResults.related_topics && searchResults.related_topics.length > 0 && (
+                      <div className="pt-4 border-t border-slate-700/50">
+                        <h4 className="text-sm text-slate-400 mb-3">Related Topics:</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {searchResults.related_topics.map((topic, index) => (
+                            <Badge 
+                              key={index}
+                              variant="outline" 
+                              className="bg-slate-700/30 text-slate-300 border-slate-600/50 hover:bg-slate-600/50 transition-colors cursor-pointer"
+                              onClick={() => setSearchQuery(topic)}
+                            >
+                              {topic}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="text-xs text-slate-500 pt-2">
+                      Source: {searchResults.source} | Powered by OceanAI
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
 
             {/* Floating Metrics */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-5xl mx-auto">
@@ -223,7 +323,7 @@ const Home = () => {
       </div>
 
       {/* Styled-JSX for Grid Pattern */}
-      <style jsx>{`
+      <style>{`
         .bg-grid-pattern {
           background-image: 
             linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
