@@ -1,0 +1,6 @@
+# This file tells git-filter-repo to replace secrets with [REDACTED]
+
+# Format:
+#   original_text==>replacement_text
+
+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==>[REDACTED]
