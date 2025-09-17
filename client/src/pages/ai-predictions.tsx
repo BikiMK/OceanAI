@@ -757,9 +757,9 @@ const AIPredictions = () => {
               </div>
               <div className="text-left">
                 <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent font-mono">
-                  NEURAL_ENGINE
+                  OCEAN_AI
                 </h1>
-                <div className="text-cyan-300 font-mono text-sm mt-2">v2.1.4 | QUANTUM_READY</div>
+                <div className="text-cyan-300 font-mono text-sm mt-2">v1.0.0 | QUANTUM_READY</div>
               </div>
             </div>
             <p className="text-lg text-slate-300 max-w-2xl mx-auto font-mono">
