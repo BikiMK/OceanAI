@@ -247,11 +247,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { findMarineRegion } = await import("../shared/marineGazetteer.js");
         
         const parsedQuery = parseMarineQuery(query);
-        const coordinates = resolveRegionCoordinates(parsedQuery.regionRaw);
+        // Use model region as priority, then parsed region
+        const regionForCoordinates = mlModelResult.region || parsedQuery.regionRaw;
+        const coordinates = resolveRegionCoordinates(regionForCoordinates);
         
         let regionData = null;
-        if (parsedQuery.regionRaw) {
-          regionData = findMarineRegion(parsedQuery.regionRaw);
+        if (regionForCoordinates) {
+          regionData = findMarineRegion(regionForCoordinates);
         }
 
         const response = {
@@ -274,65 +276,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(response);
       }
 
-      // Fallback to Gemini API if ML model failed
-      console.log("Using Gemini API fallback...");
-      
-      const { parseMarineQuery, resolveRegionCoordinates } = await import("./queryParser.js");
-      const { findMarineRegion } = await import("../shared/marineGazetteer.js");
-      const { generateOceanPrediction, generateTrendAnalysis } = await import("./gemini.js");
-      
-      const parsedQuery = parseMarineQuery(query);
-      const coordinates = resolveRegionCoordinates(parsedQuery.regionRaw);
-      
-      const response: any = {
-        queryType: parsedQuery.queryType,
-        coordinates,
-        model_used: false,
-        source: "GEMINI_FALLBACK"
-      };
-      
-      if (parsedQuery.species) {
-        response.species = parsedQuery.species;
-        response.scientificName = parsedQuery.scientificName;
-      }
-      
-      if (parsedQuery.regionRaw) {
-        const regionData = findMarineRegion(parsedQuery.regionRaw);
-        if (regionData) {
-          response.regionCanonical = regionData.canonicalName;
-          
-          if (parsedQuery.queryType === 'ocean' || parsedQuery.queryType === 'composite') {
-            response.oceanMetrics = regionData.oceanMetrics;
-          }
-        }
-      }
-      
-      if (parsedQuery.queryType === 'species' || parsedQuery.queryType === 'composite') {
-        try {
-          const predictionData = await generateOceanPrediction(query);
-          response.stock_status = predictionData.stock_status;
-          response.fishPopulation = predictionData.fishPopulation;
-          response.climateChange = predictionData.climateChange;
-          response.geneticDiversity = predictionData.geneticDiversity;
-          response.confidence = predictionData.confidence;
-          response.prediction_summary = predictionData.prediction_summary;
-          response.model_used = true;
-          
-          if (parsedQuery.queryType === 'composite') {
-            response.trendSummary = await generateTrendAnalysis(query, parsedQuery.species || '', parsedQuery.regionRaw || '');
-          }
-        } catch (error) {
-          console.warn("Gemini prediction failed, using basic fallback:", error);
-          response.stock_status = "Stable";
-          response.fishPopulation = "+5.2%";
-          response.climateChange = "-2.1%";
-          response.geneticDiversity = "Medium";
-          response.confidence = "85%";
-          response.prediction_summary = "Fallback prediction based on general marine trends.";
-        }
-      }
-      
-      res.json(response);
+      // If Python ML model failed, return error instead of using fallback
+      console.log("Python ML model unavailable, returning error");
+      return res.status(503).json({ 
+        error: "AI prediction service unavailable", 
+        hint: "Please ensure the Python service is running on port 8000",
+        message: "The local machine learning model is currently unavailable. Please start the Python service."
+      });
 
     } catch (error) {
       console.error("Enhanced prediction error:", error);
