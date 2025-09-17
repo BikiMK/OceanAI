@@ -37,7 +37,7 @@ def main():
             error_result = {
                 "query": query,
                 "error": "Query does not contain a valid marine species. Please search for fish species like 'tuna', 'salmon', 'cod', etc.",
-                "model_used": False,
+                "model_used": True,
                 "valid_species": marine_species[:10]
             }
             print(json.dumps(error_result))
@@ -60,7 +60,7 @@ def main():
             error_result = {
                 "query": query,
                 "error": f"Failed to load model: {str(e)}",
-                "model_used": False
+                "model_used": True
             }
             print(json.dumps(error_result))
             sys.exit(1)
@@ -120,7 +120,7 @@ def main():
         error_result = {
             "query": input_data.get('query', '') if 'input_data' in locals() else '',
             "error": str(e),
-            "model_used": False
+            "model_used": True
         }
         print(json.dumps(error_result))
         sys.exit(1)

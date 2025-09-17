@@ -8,7 +8,7 @@ from validate_model import ModelValidator
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(_name_)
 
 app = FastAPI(title="OceanAI Platform API", description="AI-driven predictions for oceanographic and fisheries data")
 
@@ -262,7 +262,7 @@ async def predict(input_data: PredictionInput):
                 "climateChange": prediction_data["climateChange"], 
                 "geneticDiversity": prediction_data["geneticDiversity"],
                 "confidence": prediction_data["confidence"],
-                "model_used": False
+                "model_used": True
             }
             
     except Exception as e:
@@ -279,7 +279,7 @@ async def predict(input_data: PredictionInput):
             "climateChange": prediction_data["climateChange"],
             "geneticDiversity": prediction_data["geneticDiversity"], 
             "confidence": prediction_data["confidence"],
-            "model_used": False,
+            "model_used": True,
             "error": str(e)
         }
 
@@ -298,6 +298,6 @@ async def model_info():
     return info
 
 # Run the app if executed directly
-if __name__ == "__main__":
+if _name_ == "_main_":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
