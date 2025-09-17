@@ -616,6 +616,10 @@ const AIPredictions = () => {
           setRawModelOutput(null);
           setSearchResults([]);
           throw new Error(data.error || "Invalid species. Please search for marine species like tuna, salmon, cod, etc.");
+        } else if (response.status === 503) {
+          setRawModelOutput(null);
+          setSearchResults([]);
+          throw new Error("AI prediction service is currently starting up. Please wait a moment and try again.");
         } else {
           throw new Error(data.error || "Prediction failed");
         }
@@ -667,46 +671,12 @@ const AIPredictions = () => {
     } catch (error) {
       console.error("Prediction failed:", error);
       
-      const mockResults = [
-        {
-          id: "1",
-          species: searchQuery,
-          region: "North Atlantic",
-          timeframe: "12 months",
-          scenario: "Current Conditions",
-          fishPopulation: "+12.7%",
-          climateChange: "-5.2%",
-          geneticDiversity: "High",
-          confidence: "91%",
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: "2", 
-          species: searchQuery,
-          region: "Pacific Ocean",
-          timeframe: "12 months", 
-          scenario: "RCP 4.5",
-          fishPopulation: "+8.9%",
-          climateChange: "-9.4%",
-          geneticDiversity: "Medium",
-          confidence: "84%",
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: "3",
-          species: searchQuery,
-          region: "Mediterranean",
-          timeframe: "12 months",
-          scenario: "RCP 8.5",
-          fishPopulation: "-3.2%",
-          climateChange: "-15.7%",
-          geneticDiversity: "Low",
-          confidence: "88%",
-          createdAt: new Date().toISOString()
-        }
-      ];
+      // Show error message instead of mock data since we want to use .pkl file exclusively
+      setRawModelOutput(null);
+      setSearchResults([]);
       
-      setSearchResults(mockResults);
+      // Display user-friendly error
+      alert(`Prediction Error: ${error instanceof Error ? error.message : 'An unexpected error occurred'}`)
     } finally {
       setIsGenerating(false);
     }
