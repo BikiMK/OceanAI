@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { spawn } from "child_process";
+import path from "path";
 
 const app = express();
 app.use(express.json());
@@ -60,6 +62,23 @@ app.use((req, res, next) => {
   const port = parseInt(process.env.PORT || "5000", 10);
 
   // ✅ Don’t force "0.0.0.0" on Windows — just use localhost
+  // Start Python ML service
+  const pythonBackendPath = path.join(process.cwd(), "client", "src", "Backend");
+  const pythonProcess = spawn("python", ["main.py"], {
+    cwd: pythonBackendPath,
+    stdio: "pipe"
+  });
+
+  pythonProcess.stdout.on("data", (data) => {
+    console.log(`Python service: ${data.toString().trim()}`);
+  });
+
+  pythonProcess.stderr.on("data", (data) => {
+    console.error(`Python service error: ${data.toString().trim()}`);
+  });
+
+  log("Starting Python ML service...");
+
   server.listen(port, () => {
     log(`Server running at http://localhost:${port}`);
   });
