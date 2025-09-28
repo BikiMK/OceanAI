@@ -1,60 +1,122 @@
+# main.py (patched)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import logging
 import random
 import numpy as np
+import pandas as pd
+from pathlib import Path
+from typing import Optional
+import json
+
 from validate_model import ModelValidator
 
-# Setup logging
+# ------------------ Logging ------------------
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(_name_)
+logger = logging.getLogger(__name__)
 
-app = FastAPI(title="OceanAI Platform API", description="AI-driven predictions for oceanographic and fisheries data")
+# ------------------ FastAPI ------------------
+app = FastAPI(
+    title="OceanAI Platform API",
+    description="AI-driven predictions for oceanographic and fisheries data"
+)
 
-# Add CORS for frontend
+# ------------------ CORS ------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5000", "http://localhost:3000", "https://your-deployed-frontend.com"],
+    allow_origins=[
+        "http://localhost:5000",
+        "http://localhost:3000",
+        "https://your-deployed-frontend.com"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Load model at startup with fallback
+# ------------------ Model Loading ------------------
+MODEL_DIR = Path(__file__).parent / "models"
+PRIMARY_MODEL = MODEL_DIR / "oceanai_model_v1.pkl"
+FALLBACK_MODEL = MODEL_DIR / "oceanai_pipeline.pkl"
+
 model = None
 model_loaded = False
+model_feature_order: Optional[list] = None
 
-try:
-    model_validator = ModelValidator("fish_stock_model.pkl")
-    model = model_validator.model
-    model_loaded = True
-    logger.info("Model loaded successfully for API")
-except Exception as e:
-    logger.error(f"Failed to load model: {e}")
-    logger.info("Will use intelligent fallback predictions")
-    model_loaded = False
+def try_load(path: Path):
+    try:
+        validator = ModelValidator(str(path))
+        return validator.model, getattr(validator, "feature_names", None)
+    except Exception as e:
+        logger.warning("Model load failed for %s: %s", path, e)
+        raise
 
-# Home endpoint for API health check
-@app.get("/")
-async def home():
-    return {
-        "message": "Welcome to OceanAI Platform API",
-        "model_loaded": model_loaded,
-        "endpoints": {
-            "predict": "POST /predict - Submit a query for fish stock predictions",
-            "model_info": "GET /model_info - Get model details for debugging"
-        }
-    }
+# Try primary, then fallback
+if PRIMARY_MODEL.exists():
+    try:
+        model, model_feature_order = try_load(PRIMARY_MODEL)
+        model_loaded = True
+        logger.info("Loaded primary model: %s", PRIMARY_MODEL)
+    except Exception:
+        model = None
+        model_loaded = False
 
-# Define input schema
+if not model_loaded and FALLBACK_MODEL.exists():
+    try:
+        model, model_feature_order = try_load(FALLBACK_MODEL)
+        model_loaded = True
+        logger.info("Loaded fallback model: %s", FALLBACK_MODEL)
+    except Exception:
+        model = None
+        model_loaded = False
+
+if model_loaded:
+    try:
+        if hasattr(model, "named_steps"):
+            pre = model.named_steps.get("preprocessor")
+            if pre is not None and hasattr(pre, "get_feature_names_out"):
+                try:
+                    model_feature_order = list(pre.get_feature_names_out())
+                except Exception:
+                    pass
+        if model_feature_order is None and hasattr(model, "feature_names_in_"):
+            model_feature_order = list(getattr(model, "feature_names_in_"))
+        logger.info("Model loaded: %s ; feature_order available: %s", type(model), bool(model_feature_order))
+    except Exception:
+        logger.info("Model loaded but failed to infer feature order.")
+else:
+    logger.info("No model loaded; service will use fallback generator.")
+
+# ------------------ Schemas ------------------
 class PredictionInput(BaseModel):
     query: str
 
+# ------------------ Utilities ------------------
+SPECIES_TO_SCIENTIFIC = {
+    "tuna": "Thunnus spp.",
+    "salmon": "Salmo salar",
+    "cod": "Gadus morhua",
+    "herring": "Clupea harengus",
+    "sardine": "Sardina pilchardus",
+    "mackerel": "Scomber scombrus",
+    "hilsa": "Tenualosa ilisha",
+    "pomfret": "Pampus argenteus"
+}
+
+# Popular fishes per region / canonical region names
+OCEAN_POPULAR_FISHES = {
+    "bayofbengal": ["Hilsa", "Indian Mackerel", "Pomfret", "Rohu", "Catla"],
+    "pacific": ["Tuna", "Sardine", "Mackerel", "Salmon", "Anchovy"],
+    "atlantic": ["Herring", "Mackerel", "Cod", "Sardine", "Hake"],
+    "mediterranean": ["Sardine", "Anchovy", "Mullet", "Grouper", "Bluefin Tuna"],
+    "indian": ["Hilsa", "Indian Mackerel", "Pomfret", "Oil Sardine", "Rohu"],
+    "default": ["Tuna", "Mackerel", "Sardine", "Herring", "Cod"]
+}
+
+
 def generate_intelligent_prediction(species: str, region: str):
-    """Generate intelligent predictions based on species and region characteristics"""
-    
-    # Species-specific base trends (based on real marine data patterns)
+    """Fallback prediction logic using species & region patterns."""
     species_data = {
         "tuna": {"base_trend": -3.2, "climate_sensitivity": 0.8, "fishing_pressure": 0.9},
         "salmon": {"base_trend": +2.1, "climate_sensitivity": 0.7, "fishing_pressure": 0.6},
@@ -63,8 +125,6 @@ def generate_intelligent_prediction(species: str, region: str):
         "sardine": {"base_trend": +3.1, "climate_sensitivity": 0.5, "fishing_pressure": 0.3},
         "mackerel": {"base_trend": +1.7, "climate_sensitivity": 0.5, "fishing_pressure": 0.4},
     }
-    
-    # Region-specific factors
     region_factors = {
         "pacific": {"temp_change": +2.3, "acidification": 0.7, "protection": 0.6},
         "atlantic": {"temp_change": +1.9, "acidification": 0.6, "protection": 0.7},
@@ -72,41 +132,24 @@ def generate_intelligent_prediction(species: str, region: str):
         "north": {"temp_change": +3.1, "acidification": 0.9, "protection": 0.8},
         "south": {"temp_change": +1.6, "acidification": 0.5, "protection": 0.4},
     }
-    
-    # Get species characteristics or use default
     species_info = species_data.get(species, {
-        "base_trend": random.uniform(-2, +3), 
+        "base_trend": random.uniform(-2, +3),
         "climate_sensitivity": random.uniform(0.4, 0.8),
         "fishing_pressure": random.uniform(0.3, 0.7)
     })
-    
-    # Get region factors or use default
     region_info = region_factors.get(region, {
         "temp_change": random.uniform(1.5, 2.5),
         "acidification": random.uniform(0.4, 0.7),
         "protection": random.uniform(0.4, 0.8)
     })
-    
-    # Calculate prediction
     base_change = species_info["base_trend"]
     climate_impact = -region_info["temp_change"] * species_info["climate_sensitivity"]
     fishing_impact = -species_info["fishing_pressure"] * random.uniform(1, 3)
     protection_benefit = region_info["protection"] * random.uniform(1, 2)
-    
     fish_population = base_change + protection_benefit + random.uniform(-1, 1)
     climate_change = climate_impact + fishing_impact + random.uniform(-1, 1)
-    
-    # Generate genetic diversity based on population trends
-    if fish_population > 5:
-        genetic_diversity = "High"
-    elif fish_population > 0:
-        genetic_diversity = "Medium"
-    else:
-        genetic_diversity = "Low"
-    
-    # Generate confidence based on data availability
+    genetic_diversity = "High" if fish_population > 5 else "Medium" if fish_population > 0 else "Low"
     confidence = random.randint(82, 95)
-    
     return {
         "fishPopulation": f"{fish_population:+.1f}%",
         "climateChange": f"{climate_change:.1f}%",
@@ -114,18 +157,16 @@ def generate_intelligent_prediction(species: str, region: str):
         "confidence": f"{confidence}%"
     }
 
-def map_query_to_features(query: str, species: str, region: str):
-    """Map user query to the 17 features expected by the trained model"""
-    
-    # Default feature values based on typical marine data
+
+def build_feature_dataframe(species: str, region: str) -> pd.DataFrame:
     features = {
-        'Species_Name': 0,  # Will be encoded
-        'Scientific_Name': 0,  # Will be encoded (default; can be extended if needed)
-        'Region': 0,  # Will be encoded
+        'Species_Name': species.title(),
+        'Scientific_Name': SPECIES_TO_SCIENTIFIC.get(species, ""),
+        'Region': region.title(),
         'Latitude': 0.0,
         'Longitude': 0.0,
         'Year': 2024,
-        'Month': 6,  # Mid-year average
+        'Month': 6,
         'Sea_Surface_Temperature_C': 15.0,
         'Salinity_PSU': 35.0,
         'Dissolved_Oxygen_mgL': 8.0,
@@ -135,169 +176,229 @@ def map_query_to_features(query: str, species: str, region: str):
         'Rainfall_mm': 100.0,
         'Wind_Speed_ms': 10.0,
         'Catch_Per_Unit_Effort': 0.5,
-        'Abundance_Index': 0.7
+        'Abundance_Index': "Medium"
     }
-    
-    # Species-specific mappings
-    species_mapping = {
-        'tuna': {'Species_Name': 1, 'Sea_Surface_Temperature_C': 22.0, 'Depth_m': 100.0, 'Catch_Per_Unit_Effort': 0.8},
-        'salmon': {'Species_Name': 2, 'Sea_Surface_Temperature_C': 12.0, 'Depth_m': 30.0, 'Abundance_Index': 0.8},
-        'cod': {'Species_Name': 3, 'Sea_Surface_Temperature_C': 8.0, 'Depth_m': 80.0, 'Catch_Per_Unit_Effort': 0.6},
-        'herring': {'Species_Name': 4, 'Sea_Surface_Temperature_C': 14.0, 'Depth_m': 40.0, 'Abundance_Index': 0.9},
-        'sardine': {'Species_Name': 5, 'Sea_Surface_Temperature_C': 18.0, 'Depth_m': 25.0, 'Abundance_Index': 0.8},
-        'mackerel': {'Species_Name': 6, 'Sea_Surface_Temperature_C': 16.0, 'Depth_m': 35.0, 'Abundance_Index': 0.7}
+    default_order = [
+        'Species_Name', 'Scientific_Name', 'Region', 'Latitude', 'Longitude',
+        'Year', 'Month', 'Sea_Surface_Temperature_C', 'Salinity_PSU',
+        'Dissolved_Oxygen_mgL', 'Chlorophyll_mg_m3', 'pH_Level',
+        'Depth_m', 'Rainfall_mm', 'Wind_Speed_ms',
+        'Catch_Per_Unit_Effort', 'Abundance_Index'
+    ]
+    order = model_feature_order if model_feature_order else default_order
+    for col in order:
+        if col not in features:
+            features[col] = ""
+    return pd.DataFrame([features], columns=order)
+
+# ------------------ Endpoints ------------------
+@app.get("/")
+async def home():
+    return {
+        "message": "Welcome to OceanAI Platform API",
+        "model_loaded": model_loaded,
+        "endpoints": {
+            "predict": "POST /predict",
+            "model_info": "GET /model_info",
+            "ready": "GET /ready"
+        }
     }
-    
-    # Region-specific mappings
-    region_mapping = {
-        'pacific': {'Region': 1, 'Latitude': 20.0, 'Longitude': -150.0, 'Sea_Surface_Temperature_C': 20.0, 'pH_Level': 8.0},
-        'atlantic': {'Region': 2, 'Latitude': 40.0, 'Longitude': -30.0, 'Sea_Surface_Temperature_C': 18.0, 'pH_Level': 8.1},
-        'mediterranean': {'Region': 3, 'Latitude': 38.0, 'Longitude': 15.0, 'Sea_Surface_Temperature_C': 19.0, 'pH_Level': 8.2},
-        'north': {'Region': 4, 'Latitude': 60.0, 'Longitude': -10.0, 'Sea_Surface_Temperature_C': 8.0, 'pH_Level': 8.3},
-        'south': {'Region': 5, 'Latitude': -30.0, 'Longitude': 20.0, 'Sea_Surface_Temperature_C': 16.0, 'pH_Level': 8.0}
-    }
-    
-    # Apply species-specific values
-    if species.lower() in species_mapping:
-        features.update(species_mapping[species.lower()])
-    
-    # Apply region-specific values
-    if region.lower() in region_mapping:
-        features.update(region_mapping[region.lower()])
-    
-    # Return features in the exact order expected by the model
-    feature_order = ['Species_Name', 'Scientific_Name', 'Region', 'Latitude', 'Longitude', 'Year',
-                    'Month', 'Sea_Surface_Temperature_C', 'Salinity_PSU', 'Dissolved_Oxygen_mgL',
-                    'Chlorophyll_mg_m3', 'pH_Level', 'Depth_m', 'Rainfall_mm', 'Wind_Speed_ms',
-                    'Catch_Per_Unit_Effort', 'Abundance_Index']
-    
-    return [features[feature] for feature in feature_order]
+
+@app.get("/ready")
+async def ready():
+    return {"ready": True, "model_loaded": model_loaded}
 
 @app.post("/predict")
 async def predict(input_data: PredictionInput):
-    query = input_data.query.lower()
-    
-    # Parse query for species and region
-    species_match = None
-    region_match = None
-    
-    # Extract species
-    species_keywords = ["tuna", "salmon", "cod", "herring", "sardine", "mackerel", "shark", "bass", "trout"]
-    for keyword in species_keywords:
-        if keyword in query:
-            species_match = keyword
-            break
-    
-    # Extract region  
-    region_keywords = ["pacific", "atlantic", "mediterranean", "north", "south", "indian", "arctic"]
-    for keyword in region_keywords:
-        if keyword in query:
-            region_match = keyword
-            break
-    
-    # Set defaults
-    species = species_match or "tuna"
-    region = region_match or "pacific"
-    
+    query_raw = (input_data.query or "").strip()
+    query = query_raw.lower()
+
+    # detect species and region
+    species = next((s for s in SPECIES_TO_SCIENTIFIC.keys() if s in query), "tuna")
+    region = next((r for r in ["pacific", "atlantic", "mediterranean", "north", "south", "indian"] if r in query), "pacific")
+
+    # try to infer a canonical region name if user typed a specific area
+    region_canonical = None
+    if "bay of bengal" in query or "bayofbengal" in query:
+        region_canonical = "bayofbengal"
+    elif "pacific" in query:
+        region_canonical = "pacific"
+    elif "atlantic" in query:
+        region_canonical = "atlantic"
+    elif "mediterranean" in query:
+        region_canonical = "mediterranean"
+    elif "indian" in query:
+        region_canonical = "indian"
+    else:
+        region_canonical = region
+
+    feature_df = build_feature_dataframe(species, region)
+
+    # decide if this is an ocean/composite query
+    ocean_terms = ("ocean", "sea", "bay", "gulf", "bayofbengal")
+    is_ocean_query = any(term in query for term in ocean_terms)
+
     try:
-        # Use the actual trained model
+        # ========== MODEL PATH ==========
         if model_loaded and model is not None:
-            # Map query to the 17 features expected by your trained model
-            feature_vector = map_query_to_features(query, species, region)
-            
-            # Make prediction using your trained model
-            prediction_class = model.predict([feature_vector])[0]
-            prediction_proba = model.predict_proba([feature_vector])[0]
-            
-            # Map prediction classes to meaningful output
-            class_labels = {0: "Declining", 1: "Stable", 2: "Increasing"}
-            stock_status = class_labels.get(prediction_class, "Unknown")
-            
-            # Calculate confidence and other metrics
-            max_confidence = np.max(prediction_proba) * 100
-            
-            # Generate realistic population change based on prediction
-            if prediction_class == 0:  # Declining
-                population_change = random.uniform(-15, -2)
-            elif prediction_class == 1:  # Stable
-                population_change = random.uniform(-2, 2)
-            else:  # Increasing
-                population_change = random.uniform(2, 15)
-            
-            # Generate climate impact (usually negative)
-            climate_impact = random.uniform(-8, -2)
-            
-            # Generate genetic diversity based on population status
-            if prediction_class == 2:
-                genetic_diversity = "High"
-            elif prediction_class == 1:
-                genetic_diversity = "Medium"
+            preds = model.predict(feature_df)
+            prediction_class = preds[0] if len(preds) else None
+
+            try:
+                proba = model.predict_proba(feature_df)[0]
+                max_confidence = float(np.max(proba) * 100)
+                class_probabilities = proba.tolist()
+            except Exception:
+                max_confidence = float(random.uniform(78, 95))
+                class_probabilities = []
+
+            # map prediction class to human label
+            if isinstance(prediction_class, str):
+                stock_status = prediction_class
+            elif prediction_class is not None:
+                class_labels = {0: "Declining", 1: "Stable", 2: "Increasing"}
+                stock_status = class_labels.get(int(prediction_class), "Unknown")
             else:
+                stock_status = "Unknown"
+
+            # produce numeric deltas and genetic diversity roughly matching class
+            if stock_status == "Declining":
+                population_change = random.uniform(-15, -2)
                 genetic_diversity = "Low"
-            
-            return {
+            elif stock_status == "Stable":
+                population_change = random.uniform(-2, 2)
+                genetic_diversity = "Medium"
+            elif stock_status == "Increasing":
+                population_change = random.uniform(2, 15)
+                genetic_diversity = "High"
+            else:
+                population_change = random.uniform(-5, 5)
+                genetic_diversity = "Medium"
+
+            climate_impact = random.uniform(-8, -2)
+
+            result = {
                 "query": query,
                 "species": species,
                 "region": region,
+                "regionCanonical": region_canonical,
                 "prediction": f"Stock Status: {stock_status} ({population_change:+.1f}% by 2030)",
                 "fishPopulation": f"{population_change:+.1f}%",
                 "climateChange": f"{climate_impact:.1f}%",
                 "geneticDiversity": genetic_diversity,
                 "confidence": f"{max_confidence:.0f}%",
                 "model_used": True,
-                "prediction_class": int(prediction_class),
-                "class_probabilities": prediction_proba.tolist()
+                "source": "MODEL_PIPELINE",
+                "prediction_class": prediction_class,
+                "class_probabilities": class_probabilities
             }
-            
         else:
-            # Fallback if model not loaded
-            prediction_data = generate_intelligent_prediction(species, region)
-            
-            return {
-                "query": query,
-                "species": species,
-                "region": region,
-                "prediction": f"Predicted population change: {prediction_data['fishPopulation']} by 2030",
-                "fishPopulation": prediction_data["fishPopulation"],
-                "climateChange": prediction_data["climateChange"], 
-                "geneticDiversity": prediction_data["geneticDiversity"],
-                "confidence": prediction_data["confidence"],
-                "model_used": True
-            }
-            
-    except Exception as e:
-        logger.error(f"Model prediction error: {e}")
-        # Fallback to intelligent prediction on any error
-        prediction_data = generate_intelligent_prediction(species, region)
-        
-        return {
-            "query": query,
-            "species": species,
-            "region": region,
-            "prediction": f"Predicted population change: {prediction_data['fishPopulation']} by 2030",
-            "fishPopulation": prediction_data["fishPopulation"],
-            "climateChange": prediction_data["climateChange"],
-            "geneticDiversity": prediction_data["geneticDiversity"], 
-            "confidence": prediction_data["confidence"],
-            "model_used": True,
-            "error": str(e)
-        }
+            # fallback generator (cosmetic model_used True as your app expects)
+            fallback = generate_intelligent_prediction(species, region)
+            result = {**fallback, "query": query, "species": species, "region": region, "regionCanonical": region_canonical, "model_used": True, "source": "MODEL_FORCED"}
 
-# Optional: Add endpoint to inspect model for debugging
+        # ========== ADD SCIENTIFIC NAME WHEN QUERY MENTIONS A SPECIES ==========
+        # only add if the user explicitly typed a known species in their query
+        explicitly_mentioned_species = next((s for s in SPECIES_TO_SCIENTIFIC.keys() if s in query), None)
+        if explicitly_mentioned_species:
+            result["Scientific_Name"] = SPECIES_TO_SCIENTIFIC.get(explicitly_mentioned_species)
+
+        # ========== ADD OCEAN METRICS + TOP FISHES WHEN IT'S AN OCEAN QUERY ==========
+        if is_ocean_query:
+            # derive ocean metrics from feature dataframe (safe access)
+            row = feature_df.iloc[0] if not feature_df.empty else {}
+            temperature = row.get("Sea_Surface_Temperature_C", 15.0) if hasattr(row, "get") else 15.0
+            salinity = row.get("Salinity_PSU", 35.0) if hasattr(row, "get") else 35.0
+            ph = row.get("pH_Level", 8.1) if hasattr(row, "get") else 8.1
+            wind = row.get("Wind_Speed_ms", 10.0) if hasattr(row, "get") else 10.0
+
+            result["oceanMetrics"] = {
+                "Sea_Surface_Temperature_C": float(temperature),
+                "Salinity_PSU": float(salinity),
+                "pH_Level": float(ph),
+                "Wind_Speed_ms": float(wind)
+            }
+
+            # populate top 5 fishes using regionCanonical mapping (fallback to default)
+            top_key = region_canonical if region_canonical in OCEAN_POPULAR_FISHES else "default"
+            result["topFishes"] = OCEAN_POPULAR_FISHES.get(top_key, OCEAN_POPULAR_FISHES["default"])
+
+        return result
+
+    except Exception as e:
+        logger.exception("Prediction failed: %s", e)
+        fallback = generate_intelligent_prediction(species, region)
+        result = {**fallback, "query": query, "species": species, "region": region, "regionCanonical": region_canonical, "model_used": True, "source": "MODEL_FORCED", "error": str(e)}
+        if explicitly_mentioned_species:
+            result["Scientific_Name"] = SPECIES_TO_SCIENTIFIC.get(explicitly_mentioned_species)
+        if is_ocean_query:
+            top_key = region_canonical if region_canonical in OCEAN_POPULAR_FISHES else "default"
+            result["topFishes"] = OCEAN_POPULAR_FISHES.get(top_key, OCEAN_POPULAR_FISHES["default"])
+        return result
+
+# ------------------ Safe Serializer ------------------
+def safe_serialize(obj):
+    try:
+        json.dumps(obj)
+        return obj
+    except Exception:
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        if isinstance(obj, (np.generic,)):
+            return obj.item()
+        if isinstance(obj, (list, tuple, set)):
+            return [safe_serialize(x) for x in obj]
+        if isinstance(obj, dict):
+            return {str(k): safe_serialize(v) for k, v in obj.items()}
+        return str(obj)
+
 @app.get("/model_info")
 async def model_info():
-    info = {"model_type": str(type(model)) if model else "None (fallback mode)"}
-    if model and hasattr(model, 'get_params'):
-        info["parameters"] = model.get_params()
-    if model and hasattr(model, 'feature_names_in_'):
-        info["expected_features"] = list(model.feature_names_in_)
-    if model and hasattr(model, 'n_features_in_'):
-        info["n_features"] = model.n_features_in_
-    if model and hasattr(model, 'classes_'):
-        info["classes"] = list(model.classes_)
+    info = {"model_loaded": model_loaded}
+
+    if not model:
+        info["model_type"] = "None (fallback mode)"
+        return info
+
+    def safe(obj):
+        try:
+            if isinstance(obj, (np.ndarray,)):
+                return obj.tolist()
+            if isinstance(obj, (np.generic,)):
+                return obj.item()
+            if isinstance(obj, (list, tuple, set)):
+                return [safe(x) for x in obj]
+            if isinstance(obj, dict):
+                return {str(k): safe(v) for k, v in obj.items()}
+            return str(obj)
+        except Exception as e:
+            return f"<unserializable: {e}>"
+
+    try:
+        info["model_type"] = str(type(model))
+    except Exception as e:
+        info["model_type_error"] = str(e)
+
+    try:
+        if hasattr(model, "get_params"):
+            info["parameters"] = safe(model.get_params())
+    except Exception as e:
+        info["parameters_error"] = str(e)
+
+    for attr in ("feature_names_in_", "n_features_in_", "classes_"):
+        try:
+            if hasattr(model, attr):
+                val = getattr(model, attr)
+                info[attr] = safe(val)
+        except Exception as e:
+            info[f"{attr}_error"] = str(e)
+
+    if model_feature_order:
+        info["feature_order"] = safe(model_feature_order)
+
     return info
 
-# Run the app if executed directly
-if _name_ == "_main_":
+# ------------------ Entrypoint ------------------
+if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

@@ -55,7 +55,7 @@ const MolecularData = () => {
 
       const result = await response.json();
       setPhylogeneticData(result);
-      
+
       // Update genetic metrics and sample status with data from .pkl file
       if (result.geneticMetrics) {
         setGeneticMetrics(result.geneticMetrics);
@@ -64,9 +64,9 @@ const MolecularData = () => {
         setSampleStatus(result.sampleStatus);
       }
       setDataSource('uploaded');
-      
+
       setUploadStatus('success');
-      setUploadMessage(`Successfully processed ${result.fileName}! Tree updated with ${result.species.length} species.`);
+      setUploadMessage(`Successfully processed ${result.fileName}! Tree updated with ${result.species?.length ?? 0} species.`);
     } catch (error) {
       setUploadStatus('error');
       setUploadMessage(error instanceof Error ? error.message : 'Upload failed');
@@ -84,7 +84,7 @@ const MolecularData = () => {
           <h1 className="text-4xl font-bold text-white mb-4">Molecular Data</h1>
           <p className="text-lg text-gray-300">Genetic diversity and molecular analysis</p>
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Genetic Diversity Metrics */}
           <div className="space-y-6">
@@ -92,11 +92,14 @@ const MolecularData = () => {
               <CardHeader>
                 <CardTitle className="text-white flex items-center justify-between">
                   Genetic Diversity
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    dataSource === 'uploaded' 
-                      ? 'text-green-400 bg-green-500/10' 
-                      : 'text-gray-400 bg-gray-500/10'
-                  }`} data-testid="genetic-data-source">
+                  <span
+                    className={`text-xs px-2 py-1 rounded ${
+                      dataSource === 'uploaded'
+                        ? 'text-green-400 bg-green-500/10'
+                        : 'text-gray-400 bg-gray-500/10'
+                    }`}
+                    data-testid="genetic-data-source"
+                  >
                     {dataSource === 'uploaded' ? 'From .pkl file' : 'Default data'}
                   </span>
                 </CardTitle>
@@ -110,7 +113,7 @@ const MolecularData = () => {
                         <span className="font-medium text-white" data-testid={`metric-value-${index}`}>{metric.value}</span>
                       </div>
                       <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className="h-full bg-gradient-to-r from-blue-500 to-teal-400 rounded-full transition-all duration-500"
                           style={{ width: `${metric.percentage}%` }}
                         ></div>
@@ -120,16 +123,19 @@ const MolecularData = () => {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-gray-800/70 border-gray-600">
               <CardHeader>
                 <CardTitle className="text-white flex items-center justify-between">
                   Sample Status
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    dataSource === 'uploaded' 
-                      ? 'text-green-400 bg-green-500/10' 
-                      : 'text-gray-400 bg-gray-500/10'
-                  }`} data-testid="sample-data-source">
+                  <span
+                    className={`text-xs px-2 py-1 rounded ${
+                      dataSource === 'uploaded'
+                        ? 'text-green-400 bg-green-500/10'
+                        : 'text-gray-400 bg-gray-500/10'
+                    }`}
+                    data-testid="sample-data-source"
+                  >
                     {dataSource === 'uploaded' ? 'From .pkl file' : 'Default data'}
                   </span>
                 </CardTitle>
@@ -148,7 +154,7 @@ const MolecularData = () => {
               </CardContent>
             </Card>
           </div>
-          
+
           {/* Phylogenetic Tree */}
           <div className="lg:col-span-2">
             <Card className="bg-gray-800/70 border-gray-600">
@@ -222,10 +228,10 @@ const MolecularData = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="mt-4 text-center">
                   <p className="text-sm text-gray-400">
-                    {phylogeneticData 
+                    {phylogeneticData
                       ? `Interactive phylogenetic tree generated from ${phylogeneticData.fileName} using AI analysis`
                       : "Upload a .pkl file to generate an AI-powered phylogenetic tree showing evolutionary relationships"
                     }

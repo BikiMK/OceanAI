@@ -7,12 +7,41 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+/**
+ * If `u` is a relative path (doesn't start with http), rewrite it to the local FastAPI.
+ * Example: "/predict"  -> "http://127.0.0.1:8000/predict"
+ *          "predict"   -> "http://127.0.0.1:8000/predict"
+ * Absolute URLs are returned unchanged.
+ */
+function ensureLocalBackend(u: string) {
+  if (!u || typeof u !== "string") return u;
+  const trimmed = u.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  // Use 127.0.0.1 to avoid hostname resolution quirks on some Windows setups
+  return `http://127.0.0.1:8000/${trimmed.replace(/^\/+/, "")}`;
+}
+
+/**
+ * Helper to parse JSON responses and attach a small flag indicating whether
+ * the response came from the real pipeline model.
+ */
+async function parseJsonWithModelFlag(res: Response) {
+  const json = await res.json().catch(() => null);
+  if (json && typeof json === "object" && json !== null) {
+    // prefer explicit source field if present
+    (json as any)._usedRealModel = (json as any).source === "MODEL_PIPELINE";
+  }
+  return json;
+}
+
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  const endpoint = ensureLocalBackend(url);
+
+  const res = await fetch(endpoint, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
@@ -29,16 +58,22 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
+    const relative = queryKey.join("/") as string;
+    const endpoint = ensureLocalBackend(relative);
+
+    const res = await fetch(endpoint, {
       credentials: "include",
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+      return null as unknown as T;
     }
 
     await throwIfResNotOk(res);
-    return await res.json();
+
+    // parse JSON and add _usedRealModel flag for callers
+    const json = await parseJsonWithModelFlag(res);
+    return json as unknown as T;
   };
 
 export const queryClient = new QueryClient({
